@@ -421,7 +421,13 @@ let currentUser = null, currentProfile = null, allTournaments = [];
 const GAME_ICONS  = {fortnite:'⚡',warzone:'💀',valorant:'🎯',rocket_league:'🚗'};
 const GAME_LABELS = {fortnite:'Fortnite',warzone:'Warzone',valorant:'Valorant',rocket_league:'Rocket League'};
 
-db.auth.onAuthStateChange(async (_e, session) => {
+db.auth.onAuthStateChange(async (event, session) => {
+  // Si c'est un reset de mot de passe, on ouvre la modale AVANT tout
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('resetModal').classList.add('open');
+    return; // on ne connecte pas l'utilisateur
+  }
+
   currentUser = session?.user ?? null;
   if (currentUser) { await loadProfile(); renderNavUser(); } else { currentProfile = null; renderNavGuest(); }
   updateTokenDisplay();
@@ -653,18 +659,6 @@ function showToast(msg,type='success') {
 }
 
 (async()=>{ await loadTournaments(); await loadStats(); })();
-
-// Détecte si l'URL contient #reset-password
-if (window.location.hash === '#reset-password') {
-  document.getElementById('resetModal').classList.add('open');
-}
-
-// Détecte le token de réinitialisation dans l'URL
-db.auth.onAuthStateChange((event) => {
-  if (event === 'PASSWORD_RECOVERY') {
-    document.getElementById('resetModal').classList.add('open');
-  }
-});
 </script>
 </body>
 </html>
