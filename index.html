@@ -6,1395 +6,597 @@
 <title>EliteArena — Compete. Win. Dominate.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-/* ═══════════════════════════════════════════════
-   TOKENS & VARIABLES
-═══════════════════════════════════════════════ */
-:root {
-  --c-bg:       #080b12;
-  --c-bg2:      #0d1220;
-  --c-surface:  #111827;
-  --c-border:   #1e2d45;
-  --c-neon1:    #00f5ff;   /* cyan */
-  --c-neon2:    #ff2d78;   /* rose */
-  --c-neon3:    #ffe234;   /* yellow */
-  --c-neon4:    #7c3aed;   /* purple */
-  --c-text:     #e8edf5;
-  --c-muted:    #5a6a82;
-  --font-title: 'Bebas Neue', sans-serif;
-  --font-ui:    'Rajdhani', sans-serif;
-  --font-mono:  'JetBrains Mono', monospace;
-  --radius:     6px;
-  --glow-cyan:  0 0 20px rgba(0,245,255,.45), 0 0 60px rgba(0,245,255,.15);
-  --glow-pink:  0 0 20px rgba(255,45,120,.45), 0 0 60px rgba(255,45,120,.15);
-}
-
-/* ═══════════════════════════════════════════════
-   RESET & BASE
-═══════════════════════════════════════════════ */
+:root{--c-bg:#080b12;--c-bg2:#0d1220;--c-surface:#111827;--c-border:#1e2d45;--c-neon1:#00f5ff;--c-neon2:#ff2d78;--c-neon3:#ffe234;--c-neon4:#7c3aed;--c-text:#e8edf5;--c-muted:#5a6a82;--font-title:'Bebas Neue',sans-serif;--font-ui:'Rajdhani',sans-serif;--font-mono:'JetBrains Mono',monospace;--radius:6px;--glow-cyan:0 0 20px rgba(0,245,255,.45),0 0 60px rgba(0,245,255,.15);--glow-pink:0 0 20px rgba(255,45,120,.45),0 0 60px rgba(255,45,120,.15)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{
-  background:var(--c-bg);
-  color:var(--c-text);
-  font-family:var(--font-ui);
-  font-size:16px;
-  line-height:1.6;
-  overflow-x:hidden;
-  cursor:default;
-}
+body{background:var(--c-bg);color:var(--c-text);font-family:var(--font-ui);font-size:16px;line-height:1.6;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
-img{max-width:100%}
-
-/* scrollbar */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:var(--c-bg)}
-::-webkit-scrollbar-thumb{background:var(--c-neon4);border-radius:3px}
-
-/* ═══════════════════════════════════════════════
-   NOISE OVERLAY
-═══════════════════════════════════════════════ */
-body::before{
-  content:'';
-  position:fixed;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
-  pointer-events:none;z-index:9999;opacity:.4;
-}
-
-/* ═══════════════════════════════════════════════
-   ANIMATED GRID BG
-═══════════════════════════════════════════════ */
-.grid-bg{
-  position:fixed;inset:0;z-index:0;
-  background-image:
-    linear-gradient(rgba(0,245,255,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,245,255,.04) 1px,transparent 1px);
-  background-size:60px 60px;
-  animation:gridMove 20s linear infinite;
-}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--c-bg)}::-webkit-scrollbar-thumb{background:var(--c-neon4);border-radius:3px}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+.grid-bg{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,245,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.04) 1px,transparent 1px);background-size:60px 60px;animation:gridMove 20s linear infinite}
 @keyframes gridMove{from{background-position:0 0}to{background-position:0 60px}}
-
-/* ═══════════════════════════════════════════════
-   GLOW ORBS
-═══════════════════════════════════════════════ */
 .orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
 .orb-1{width:600px;height:600px;top:-200px;left:-150px;background:rgba(0,245,255,.08)}
 .orb-2{width:500px;height:500px;bottom:-150px;right:-100px;background:rgba(255,45,120,.08)}
 .orb-3{width:400px;height:400px;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(124,58,237,.06)}
-
-/* ═══════════════════════════════════════════════
-   NAVBAR
-═══════════════════════════════════════════════ */
-nav{
-  position:sticky;top:0;z-index:100;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 40px;height:68px;
-  background:rgba(8,11,18,.85);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--c-border);
-}
-.nav-logo{
-  font-family:var(--font-title);
-  font-size:1.8rem;
-  letter-spacing:2px;
-  background:linear-gradient(90deg,var(--c-neon1),var(--c-neon2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:68px;background:rgba(8,11,18,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--c-border)}
+.nav-logo{font-family:var(--font-title);font-size:1.8rem;letter-spacing:2px;background:linear-gradient(90deg,var(--c-neon1),var(--c-neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;cursor:pointer}
 .nav-logo span{color:var(--c-neon3);-webkit-text-fill-color:var(--c-neon3)}
 .nav-links{display:flex;gap:32px;align-items:center}
-.nav-links a{
-  font-size:.9rem;font-weight:600;letter-spacing:1px;
-  text-transform:uppercase;color:var(--c-muted);
-  transition:color .2s;
-  position:relative;
-}
-.nav-links a::after{
-  content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;
-  background:var(--c-neon1);transition:width .25s;
-}
-.nav-links a:hover{color:var(--c-neon1)}
-.nav-links a:hover::after,.nav-links a.active::after{width:100%}
-.nav-links a.active{color:var(--c-text)}
+.nav-links a{font-size:.9rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--c-muted);transition:color .2s;position:relative;cursor:pointer}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--c-neon1);transition:width .25s}
+.nav-links a:hover{color:var(--c-neon1)}.nav-links a:hover::after,.nav-links a.active::after{width:100%}.nav-links a.active{color:var(--c-text)}
 .nav-actions{display:flex;gap:12px;align-items:center}
-.btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:9px 22px;border-radius:var(--radius);
-  font-family:var(--font-ui);font-weight:700;font-size:.85rem;
-  letter-spacing:1px;text-transform:uppercase;
-  border:none;cursor:pointer;transition:all .25s;
-}
-.btn-ghost{
-  background:transparent;border:1px solid var(--c-border);color:var(--c-muted);
-}
-.btn-ghost:hover{border-color:var(--c-neon1);color:var(--c-neon1);box-shadow:var(--glow-cyan)}
-.btn-primary{
-  background:linear-gradient(135deg,var(--c-neon1),var(--c-neon4));
-  color:#fff;
-}
-.btn-primary:hover{box-shadow:var(--glow-cyan);transform:translateY(-1px)}
-.btn-pink{background:linear-gradient(135deg,var(--c-neon2),var(--c-neon4));color:#fff}
-.btn-pink:hover{box-shadow:var(--glow-pink);transform:translateY(-1px)}
-
-/* ═══════════════════════════════════════════════
-   LAYOUT
-═══════════════════════════════════════════════ */
-main{position:relative;z-index:1}
-.container{max-width:1280px;margin:0 auto;padding:0 40px}
-section{padding:80px 0}
-
-/* ═══════════════════════════════════════════════
-   HERO
-═══════════════════════════════════════════════ */
-.hero{
-  min-height:calc(100vh - 68px);
-  display:flex;align-items:center;
-  position:relative;overflow:hidden;
-  padding:60px 0;
-}
-.hero-content{
-  position:relative;z-index:2;
-  max-width:680px;
-}
-.hero-badge{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 16px;border-radius:50px;
-  border:1px solid rgba(0,245,255,.3);
-  background:rgba(0,245,255,.06);
-  font-size:.75rem;font-weight:700;letter-spacing:2px;
-  text-transform:uppercase;color:var(--c-neon1);
-  margin-bottom:24px;
-  animation:fadeUp .6s ease both;
-}
-.pulse-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--c-neon2);
-  animation:pulseDot 1.5s ease-in-out infinite;
-}
-@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
-
-.hero h1{
-  font-family:var(--font-title);
-  font-size:clamp(3.5rem,8vw,7rem);
-  line-height:.95;
-  letter-spacing:2px;
-  margin-bottom:24px;
-  animation:fadeUp .6s .1s ease both;
-}
-.hero h1 .accent-cyan{color:var(--c-neon1);text-shadow:var(--glow-cyan)}
-.hero h1 .accent-pink{color:var(--c-neon2);text-shadow:var(--glow-pink)}
-.hero h1 .accent-yellow{color:var(--c-neon3)}
-
-.hero p{
-  font-size:1.1rem;color:var(--c-muted);max-width:520px;
-  margin-bottom:36px;
-  animation:fadeUp .6s .2s ease both;
-}
-.hero-cta{
-  display:flex;gap:16px;flex-wrap:wrap;
-  animation:fadeUp .6s .3s ease both;
-}
-.hero-stats{
-  display:flex;gap:40px;margin-top:64px;
-  animation:fadeUp .6s .4s ease both;
-}
-.stat{border-left:2px solid var(--c-border);padding-left:20px}
-.stat-value{
-  font-family:var(--font-title);font-size:2.2rem;
-  background:linear-gradient(90deg,var(--c-neon1),var(--c-neon3));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-}
-.stat-label{font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted)}
-
-/* hero visual */
-.hero-visual{
-  position:absolute;right:-60px;top:50%;transform:translateY(-50%);
-  width:600px;height:600px;z-index:1;
-  animation:floatHero 6s ease-in-out infinite;
-}
-@keyframes floatHero{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(calc(-50% - 16px)) translateX(-8px)}}
-
-.hero-visual-inner{
-  width:100%;height:100%;border-radius:50%;
-  background:
-    radial-gradient(circle at 30% 30%,rgba(0,245,255,.2),transparent 60%),
-    radial-gradient(circle at 70% 70%,rgba(255,45,120,.2),transparent 60%),
-    radial-gradient(circle at 50% 50%,rgba(124,58,237,.1),transparent 70%);
-  border:1px solid rgba(0,245,255,.12);
-  display:flex;align-items:center;justify-content:center;
-}
-.hero-trophy{
-  font-size:180px;
-  filter:drop-shadow(0 0 40px rgba(255,226,52,.5));
-  animation:trophyPulse 3s ease-in-out infinite;
-}
-@keyframes trophyPulse{0%,100%{filter:drop-shadow(0 0 40px rgba(255,226,52,.5))}50%{filter:drop-shadow(0 0 80px rgba(255,226,52,.8))}}
-
-/* ring animation */
-.ring{
-  position:absolute;border-radius:50%;border:1px solid;
-  animation:ringExpand 3s ease-out infinite;
-}
-.ring-1{width:300px;height:300px;border-color:rgba(0,245,255,.2);animation-delay:0s}
-.ring-2{width:450px;height:450px;border-color:rgba(255,45,120,.15);animation-delay:1s}
-.ring-3{width:580px;height:580px;border-color:rgba(124,58,237,.1);animation-delay:2s}
-@keyframes ringExpand{0%{transform:scale(.8);opacity:0}50%{opacity:1}100%{transform:scale(1.1);opacity:0}}
-
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-
-/* ═══════════════════════════════════════════════
-   SECTION TITLES
-═══════════════════════════════════════════════ */
-.section-header{text-align:center;margin-bottom:60px}
-.section-tag{
-  display:inline-block;
-  font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;
-  color:var(--c-neon1);margin-bottom:12px;
-}
-.section-title{
-  font-family:var(--font-title);font-size:clamp(2rem,4vw,3.5rem);
-  letter-spacing:2px;line-height:1;
-}
-.section-title .hi{color:var(--c-neon2)}
-.section-sub{color:var(--c-muted);font-size:1rem;max-width:500px;margin:12px auto 0}
-
-/* divider */
-.divider{
-  height:1px;
-  background:linear-gradient(90deg,transparent,var(--c-border),transparent);
-  margin:0;
-}
-
-/* ═══════════════════════════════════════════════
-   LIVE TICKER
-═══════════════════════════════════════════════ */
-.ticker-wrap{
-  background:var(--c-surface);
-  border-top:1px solid var(--c-border);
-  border-bottom:1px solid var(--c-border);
-  padding:10px 0;overflow:hidden;
-}
-.ticker-track{
-  display:flex;gap:60px;
-  animation:tickerRun 25s linear infinite;
-  white-space:nowrap;
-}
+.nav-user{display:flex;align-items:center;gap:10px;background:var(--c-surface);border:1px solid var(--c-border);padding:6px 14px;border-radius:50px;font-size:.85rem;font-weight:600}
+.nav-tokens{color:var(--c-neon3);font-family:var(--font-mono)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;border-radius:var(--radius);font-family:var(--font-ui);font-weight:700;font-size:.85rem;letter-spacing:1px;text-transform:uppercase;border:none;cursor:pointer;transition:all .25s}
+.btn-ghost{background:transparent;border:1px solid var(--c-border);color:var(--c-muted)}.btn-ghost:hover{border-color:var(--c-neon1);color:var(--c-neon1);box-shadow:var(--glow-cyan)}
+.btn-primary{background:linear-gradient(135deg,var(--c-neon1),var(--c-neon4));color:#fff}.btn-primary:hover{box-shadow:var(--glow-cyan);transform:translateY(-1px)}
+.btn-pink{background:linear-gradient(135deg,var(--c-neon2),var(--c-neon4));color:#fff}.btn-pink:hover{box-shadow:var(--glow-pink);transform:translateY(-1px)}
+.btn-danger{background:rgba(255,45,120,.15);border:1px solid var(--c-neon2);color:var(--c-neon2)}
+main{position:relative;z-index:1}.container{max-width:1280px;margin:0 auto;padding:0 40px}section{padding:80px 0}
+.page{display:none}.page.active{display:block}.divider{height:1px;background:linear-gradient(90deg,transparent,var(--c-border),transparent)}
+.ticker-wrap{background:var(--c-surface);border-top:1px solid var(--c-border);border-bottom:1px solid var(--c-border);padding:10px 0;overflow:hidden}
+.ticker-track{display:flex;gap:60px;animation:tickerRun 25s linear infinite;white-space:nowrap}
 @keyframes tickerRun{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.ticker-item{
-  display:flex;align-items:center;gap:10px;
-  font-size:.8rem;font-weight:600;letter-spacing:1px;
-  text-transform:uppercase;color:var(--c-muted);
-  flex-shrink:0;
-}
-.ticker-item .dot{color:var(--c-neon1);font-size:1.2rem}
-.ticker-item strong{color:var(--c-text)}
-.ticker-item .prize{color:var(--c-neon3);font-family:var(--font-mono)}
-
-/* ═══════════════════════════════════════════════
-   TOURNAMENT CARDS
-═══════════════════════════════════════════════ */
-.tournaments-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
-  gap:24px;
-}
-.t-card{
-  background:var(--c-surface);
-  border:1px solid var(--c-border);
-  border-radius:12px;
-  overflow:hidden;
-  transition:transform .25s,border-color .25s,box-shadow .25s;
-  cursor:pointer;
-  position:relative;
-}
-.t-card:hover{
-  transform:translateY(-4px);
-  border-color:var(--c-neon1);
-  box-shadow:0 8px 40px rgba(0,245,255,.1);
-}
-.t-card-banner{
-  height:120px;position:relative;overflow:hidden;
-  display:flex;align-items:center;justify-content:center;
-}
-.t-card-banner.fn{background:linear-gradient(135deg,#0a1628,#1a3a6e,#0077ff)}
-.t-card-banner.wz{background:linear-gradient(135deg,#0d1a0d,#1a4a1a,#00cc44)}
-.t-card-banner.rl{background:linear-gradient(135deg,#1a0a28,#4a1a6e,#cc00ff)}
-.t-card-banner.va{background:linear-gradient(135deg,#1a0a0a,#4a1a1a,#ff4444)}
-.t-card-banner.mc{background:linear-gradient(135deg,#0d1a28,#1a3050,#3399ff)}
-
+.ticker-item{display:flex;align-items:center;gap:10px;font-size:.8rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--c-muted);flex-shrink:0}
+.ticker-item .dot{color:var(--c-neon1)}.ticker-item strong{color:var(--c-text)}.ticker-item .prize{color:var(--c-neon3);font-family:var(--font-mono)}
+.hero{min-height:calc(100vh - 68px);display:flex;align-items:center;position:relative;overflow:hidden;padding:60px 0}
+.hero-content{position:relative;z-index:2;max-width:680px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:50px;border:1px solid rgba(0,245,255,.3);background:rgba(0,245,255,.06);font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--c-neon1);margin-bottom:24px;animation:fadeUp .6s ease both}
+.pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--c-neon2);animation:pulseDot 1.5s ease-in-out infinite;flex-shrink:0}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+.hero h1{font-family:var(--font-title);font-size:clamp(3.5rem,8vw,7rem);line-height:.95;letter-spacing:2px;margin-bottom:24px;animation:fadeUp .6s .1s ease both}
+.hero h1 .accent-cyan{color:var(--c-neon1);text-shadow:var(--glow-cyan)}.hero h1 .accent-pink{color:var(--c-neon2)}.hero h1 .accent-yellow{color:var(--c-neon3)}
+.hero p{font-size:1.1rem;color:var(--c-muted);max-width:520px;margin-bottom:36px;animation:fadeUp .6s .2s ease both}
+.hero-cta{display:flex;gap:16px;flex-wrap:wrap;animation:fadeUp .6s .3s ease both}
+.hero-stats{display:flex;gap:40px;margin-top:64px;animation:fadeUp .6s .4s ease both}
+.stat{border-left:2px solid var(--c-border);padding-left:20px}
+.stat-value{font-family:var(--font-title);font-size:2.2rem;background:linear-gradient(90deg,var(--c-neon1),var(--c-neon3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted)}
+.hero-visual{position:absolute;right:-60px;top:50%;transform:translateY(-50%);width:600px;height:600px;z-index:1;animation:floatHero 6s ease-in-out infinite}
+@keyframes floatHero{0%,100%{transform:translateY(-50%)}50%{transform:translateY(calc(-50% - 16px))}}
+.hero-visual-inner{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(0,245,255,.2),transparent 60%),radial-gradient(circle at 70% 70%,rgba(255,45,120,.2),transparent 60%);border:1px solid rgba(0,245,255,.12);display:flex;align-items:center;justify-content:center}
+.hero-trophy{font-size:180px;filter:drop-shadow(0 0 40px rgba(255,226,52,.5));animation:trophyPulse 3s ease-in-out infinite}
+@keyframes trophyPulse{0%,100%{filter:drop-shadow(0 0 40px rgba(255,226,52,.5))}50%{filter:drop-shadow(0 0 80px rgba(255,226,52,.8))}}
+.ring{position:absolute;border-radius:50%;border:1px solid;animation:ringExpand 3s ease-out infinite}
+.ring-1{width:300px;height:300px;border-color:rgba(0,245,255,.2)}.ring-2{width:450px;height:450px;border-color:rgba(255,45,120,.15);animation-delay:1s}.ring-3{width:580px;height:580px;border-color:rgba(124,58,237,.1);animation-delay:2s}
+@keyframes ringExpand{0%{transform:scale(.8);opacity:0}50%{opacity:1}100%{transform:scale(1.1);opacity:0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.section-header{text-align:center;margin-bottom:60px}
+.section-tag{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--c-neon1);margin-bottom:12px}
+.section-title{font-family:var(--font-title);font-size:clamp(2rem,4vw,3.5rem);letter-spacing:2px;line-height:1}.section-title .hi{color:var(--c-neon2)}
+.section-sub{color:var(--c-muted);font-size:1rem;max-width:500px;margin:12px auto 0}
+.flex-between{display:flex;align-items:center;justify-content:space-between}
+.tournaments-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px}
+.t-card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;overflow:hidden;transition:transform .25s,border-color .25s,box-shadow .25s;cursor:pointer}
+.t-card:hover{transform:translateY(-4px);border-color:var(--c-neon1);box-shadow:0 8px 40px rgba(0,245,255,.1)}
+.t-card-banner{height:120px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.t-card-banner.fortnite{background:linear-gradient(135deg,#0a1628,#1a3a6e,#0077ff)}
+.t-card-banner.warzone{background:linear-gradient(135deg,#0d1a0d,#1a4a1a,#00cc44)}
+.t-card-banner.valorant{background:linear-gradient(135deg,#1a0a0a,#4a1a1a,#ff4444)}
+.t-card-banner.rocket_league{background:linear-gradient(135deg,#1a0a28,#4a1a6e,#cc00ff)}
+.t-card-banner.default{background:linear-gradient(135deg,#0d1a28,#1a3050,#3399ff)}
 .t-card-banner-icon{font-size:3rem;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
-.t-card-live-badge{
-  position:absolute;top:12px;right:12px;
-  display:flex;align-items:center;gap:6px;
-  background:rgba(255,45,120,.2);border:1px solid var(--c-neon2);
-  padding:3px 10px;border-radius:50px;
-  font-size:.7rem;font-weight:700;letter-spacing:1px;
-  color:var(--c-neon2);
-}
-.t-card-soon{
-  position:absolute;top:12px;right:12px;
-  background:rgba(255,226,52,.15);border:1px solid var(--c-neon3);
-  padding:3px 10px;border-radius:50px;
-  font-size:.7rem;font-weight:700;letter-spacing:1px;
-  color:var(--c-neon3);
-}
+.t-card-live-badge{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:6px;background:rgba(255,45,120,.2);border:1px solid var(--c-neon2);padding:3px 10px;border-radius:50px;font-size:.7rem;font-weight:700;letter-spacing:1px;color:var(--c-neon2)}
+.t-card-soon{position:absolute;top:12px;right:12px;background:rgba(255,226,52,.15);border:1px solid var(--c-neon3);padding:3px 10px;border-radius:50px;font-size:.7rem;font-weight:700;letter-spacing:1px;color:var(--c-neon3)}
 .t-card-body{padding:20px}
-.t-card-game{
-  font-size:.7rem;font-weight:700;letter-spacing:2px;
-  text-transform:uppercase;color:var(--c-neon1);margin-bottom:8px;
-}
+.t-card-game{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--c-neon1);margin-bottom:8px}
 .t-card-name{font-family:var(--font-title);font-size:1.4rem;letter-spacing:1px;margin-bottom:12px}
 .t-card-meta{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-.meta-chip{
-  display:flex;align-items:center;gap:5px;
-  background:rgba(255,255,255,.04);
-  border:1px solid var(--c-border);
-  padding:4px 10px;border-radius:50px;
-  font-size:.75rem;color:var(--c-muted);
-}
-.t-card-footer{
-  display:flex;align-items:center;justify-content:space-between;
-  padding-top:16px;border-top:1px solid var(--c-border);
-}
-.prize-pool{
-  display:flex;flex-direction:column;
-}
-.prize-label{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted)}
-.prize-amount{
-  font-family:var(--font-mono);font-size:1.1rem;font-weight:700;
-  color:var(--c-neon3);
-}
-.slots-info{
-  text-align:right;
-  font-size:.75rem;color:var(--c-muted);
-}
-.slots-bar{
-  width:80px;height:4px;background:var(--c-border);
-  border-radius:2px;margin-top:4px;overflow:hidden;
-}
+.meta-chip{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid var(--c-border);padding:4px 10px;border-radius:50px;font-size:.75rem;color:var(--c-muted)}
+.t-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid var(--c-border)}
+.prize-pool{display:flex;flex-direction:column}.prize-label{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted)}
+.prize-amount{font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:var(--c-neon3)}
+.slots-info{text-align:right;font-size:.75rem;color:var(--c-muted)}
+.slots-bar{width:80px;height:4px;background:var(--c-border);border-radius:2px;margin-top:4px;overflow:hidden}
 .slots-fill{height:100%;background:linear-gradient(90deg,var(--c-neon1),var(--c-neon4));border-radius:2px}
-
-/* progress */
 .t-card-progress{padding:0 20px 20px}
-.progress-label{
-  display:flex;justify-content:space-between;
-  font-size:.7rem;color:var(--c-muted);margin-bottom:6px;
-}
+.progress-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--c-muted);margin-bottom:6px}
 .progress-bar{height:5px;background:var(--c-border);border-radius:3px;overflow:hidden}
 .progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--c-neon2),var(--c-neon4))}
-
-/* ═══════════════════════════════════════════════
-   FILTERS
-═══════════════════════════════════════════════ */
-.filters{
-  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px;
-  align-items:center;
-}
-.filter-label{
-  font-size:.75rem;letter-spacing:2px;text-transform:uppercase;
-  color:var(--c-muted);margin-right:8px;
-}
-.filter-btn{
-  padding:7px 18px;border-radius:50px;
-  border:1px solid var(--c-border);
-  background:transparent;color:var(--c-muted);
-  font-family:var(--font-ui);font-size:.8rem;font-weight:600;
-  letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-  transition:all .2s;
-}
-.filter-btn:hover,.filter-btn.active{
-  border-color:var(--c-neon1);color:var(--c-neon1);
-  background:rgba(0,245,255,.06);
-}
-
-/* ═══════════════════════════════════════════════
-   LEADERBOARD
-═══════════════════════════════════════════════ */
-.leaderboard-table{
-  background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:12px;overflow:hidden;
-}
-.lb-header{
-  display:grid;grid-template-columns:60px 1fr 120px 120px 120px;
-  padding:14px 24px;
-  background:rgba(0,0,0,.3);
-  border-bottom:1px solid var(--c-border);
-  font-size:.7rem;letter-spacing:2px;text-transform:uppercase;
-  color:var(--c-muted);font-weight:700;
-}
-.lb-row{
-  display:grid;grid-template-columns:60px 1fr 120px 120px 120px;
-  padding:16px 24px;align-items:center;
-  border-bottom:1px solid rgba(30,45,69,.5);
-  transition:background .2s;cursor:pointer;
-}
-.lb-row:hover{background:rgba(0,245,255,.03)}
-.lb-row:last-child{border-bottom:none}
-.lb-row.top-1{background:rgba(255,226,52,.04)}
-.lb-row.top-2{background:rgba(192,192,192,.03)}
-.lb-row.top-3{background:rgba(205,127,50,.03)}
-.lb-rank{
-  font-family:var(--font-title);font-size:1.2rem;
-  text-align:center;
-}
-.rank-gold{color:var(--c-neon3)}
-.rank-silver{color:#c0c0c0}
-.rank-bronze{color:#cd7f32}
-.rank-std{color:var(--c-muted)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px;align-items:center}
+.filter-label{font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);margin-right:8px}
+.filter-btn{padding:7px 18px;border-radius:50px;border:1px solid var(--c-border);background:transparent;color:var(--c-muted);font-family:var(--font-ui);font-size:.8rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.filter-btn:hover,.filter-btn.active{border-color:var(--c-neon1);color:var(--c-neon1);background:rgba(0,245,255,.06)}
+.leaderboard-table{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;overflow:hidden}
+.lb-header{display:grid;grid-template-columns:60px 1fr 120px 120px 120px;padding:14px 24px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--c-border);font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);font-weight:700}
+.lb-row{display:grid;grid-template-columns:60px 1fr 120px 120px 120px;padding:16px 24px;align-items:center;border-bottom:1px solid rgba(30,45,69,.5);transition:background .2s;cursor:pointer}
+.lb-row:hover{background:rgba(0,245,255,.03)}.lb-row:last-child{border-bottom:none}
+.lb-row.top-1{background:rgba(255,226,52,.04)}.lb-row.top-2{background:rgba(192,192,192,.03)}.lb-row.top-3{background:rgba(205,127,50,.03)}
+.lb-rank{font-family:var(--font-title);font-size:1.2rem;text-align:center}
+.rank-gold{color:var(--c-neon3)}.rank-silver{color:#c0c0c0}.rank-bronze{color:#cd7f32}.rank-std{color:var(--c-muted)}
 .lb-player{display:flex;align-items:center;gap:12px}
-.lb-avatar{
-  width:36px;height:36px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.1rem;font-weight:700;
-  background:var(--c-bg2);border:1px solid var(--c-border);
-}
-.lb-name{font-weight:600;font-size:.95rem}
-.lb-tag{font-size:.75rem;color:var(--c-muted);font-family:var(--font-mono)}
-.lb-val{font-family:var(--font-mono);font-size:.9rem;text-align:center}
-.lb-wins{color:var(--c-neon1)}
-.lb-earnings{color:var(--c-neon3)}
-.lb-kd{color:var(--c-neon2)}
-
-/* ═══════════════════════════════════════════════
-   SHOP
-═══════════════════════════════════════════════ */
-.shop-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:20px;
-}
-.shop-card{
-  background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:12px;padding:24px;text-align:center;
-  transition:all .25s;cursor:pointer;position:relative;overflow:hidden;
-}
-.shop-card::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,transparent 60%,rgba(0,245,255,.04));
-  pointer-events:none;
-}
-.shop-card:hover{border-color:var(--c-neon3);transform:translateY(-4px);box-shadow:0 8px 40px rgba(255,226,52,.08)}
-.shop-card.featured{
-  border-color:rgba(255,226,52,.4);
-  background:linear-gradient(135deg,var(--c-surface),rgba(255,226,52,.04));
-}
-.shop-badge-featured{
-  position:absolute;top:12px;right:12px;
-  background:var(--c-neon3);color:#000;
-  padding:2px 8px;border-radius:4px;
-  font-size:.65rem;font-weight:700;letter-spacing:1px;
-}
-.shop-tokens-icon{font-size:3rem;margin-bottom:12px;display:block}
-.shop-amount{
-  font-family:var(--font-title);font-size:2rem;
-  color:var(--c-neon3);margin-bottom:4px;
-}
-.shop-bonus{font-size:.8rem;color:var(--c-neon1);margin-bottom:16px}
-.shop-price{
-  font-family:var(--font-mono);font-size:1.1rem;
-  color:var(--c-text);font-weight:700;margin-bottom:16px;
-}
-
-/* ═══════════════════════════════════════════════
-   MATCHES LIVE
-═══════════════════════════════════════════════ */
+.lb-avatar{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:var(--c-bg2);border:1px solid var(--c-border)}
+.lb-name{font-weight:600;font-size:.95rem}.lb-tag{font-size:.75rem;color:var(--c-muted);font-family:var(--font-mono)}
+.lb-val{font-family:var(--font-mono);font-size:.9rem;text-align:center}.lb-wins{color:var(--c-neon1)}.lb-earnings{color:var(--c-neon3)}.lb-kd{color:var(--c-neon2)}
 .matches-list{display:flex;flex-direction:column;gap:16px}
-.match-card{
-  background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:10px;padding:20px 24px;
-  display:flex;align-items:center;gap:24px;
-  transition:border-color .2s;
-}
+.match-card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:20px 24px;display:flex;align-items:center;gap:24px;transition:border-color .2s}
 .match-card:hover{border-color:var(--c-neon2)}
-.match-live-dot{
-  width:10px;height:10px;border-radius:50%;
-  background:var(--c-neon2);
-  box-shadow:0 0 8px var(--c-neon2);
-  animation:pulseDot 1.5s ease-in-out infinite;
-  flex-shrink:0;
-}
-.match-teams{
-  display:flex;align-items:center;gap:16px;flex:1;
-}
+.match-live-dot{width:10px;height:10px;border-radius:50%;background:var(--c-neon2);box-shadow:0 0 8px var(--c-neon2);animation:pulseDot 1.5s ease-in-out infinite;flex-shrink:0}
+.match-teams{display:flex;align-items:center;gap:16px;flex:1}
 .team{display:flex;align-items:center;gap:10px}
-.team-icon{
-  width:40px;height:40px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--c-bg2);border:1px solid var(--c-border);
-  font-size:1.3rem;
-}
+.team-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--c-bg2);border:1px solid var(--c-border);font-size:1.3rem}
 .team-name{font-weight:700;font-size:.95rem}
-.vs-badge{
-  font-family:var(--font-title);font-size:1.1rem;
-  color:var(--c-muted);padding:0 8px;
-}
-.match-score{
-  display:flex;align-items:center;gap:12px;
-  font-family:var(--font-mono);font-size:1.4rem;font-weight:700;
-}
-.score-a{color:var(--c-neon1)}
-.score-sep{color:var(--c-muted)}
-.score-b{color:var(--c-neon2)}
-.match-meta{
-  display:flex;flex-direction:column;align-items:flex-end;gap:4px;
-  font-size:.75rem;color:var(--c-muted);
-}
-.match-game-tag{
-  background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);
-  color:var(--c-neon1);padding:2px 8px;border-radius:4px;
-  font-size:.7rem;font-weight:700;letter-spacing:1px;
-}
-
-/* ═══════════════════════════════════════════════
-   FEATURES
-═══════════════════════════════════════════════ */
-.features-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
-}
-.feature-card{
-  background:var(--c-surface);border:1px solid var(--c-border);
-  border-radius:12px;padding:32px;
-  transition:all .25s;position:relative;overflow:hidden;
-}
-.feature-card::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--c-neon4),var(--c-neon1));
-  transform:scaleX(0);transform-origin:left;transition:transform .3s;
-}
-.feature-card:hover::after{transform:scaleX(1)}
-.feature-card:hover{border-color:rgba(0,245,255,.3);transform:translateY(-4px)}
-.feature-icon{
-  width:52px;height:52px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.5rem;margin-bottom:20px;
-  background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);
-}
+.vs-badge{font-family:var(--font-title);font-size:1.1rem;color:var(--c-muted);padding:0 8px}
+.match-score{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:1.4rem;font-weight:700}
+.score-a{color:var(--c-neon1)}.score-sep{color:var(--c-muted)}.score-b{color:var(--c-neon2)}
+.match-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:.75rem;color:var(--c-muted)}
+.match-game-tag{background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);color:var(--c-neon1);padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;letter-spacing:1px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
+.shop-card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;padding:24px;text-align:center;transition:all .25s;cursor:pointer;position:relative;overflow:hidden}
+.shop-card:hover{border-color:var(--c-neon3);transform:translateY(-4px);box-shadow:0 8px 40px rgba(255,226,52,.08)}
+.shop-card.featured{border-color:rgba(255,226,52,.4);background:linear-gradient(135deg,var(--c-surface),rgba(255,226,52,.04))}
+.shop-badge-featured{position:absolute;top:12px;right:12px;background:var(--c-neon3);color:#000;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:700;letter-spacing:1px}
+.shop-tokens-icon{font-size:3rem;margin-bottom:12px;display:block}
+.shop-amount{font-family:var(--font-title);font-size:2rem;color:var(--c-neon3);margin-bottom:4px}
+.shop-bonus{font-size:.8rem;color:var(--c-neon1);margin-bottom:16px}
+.shop-price{font-family:var(--font-mono);font-size:1.1rem;color:var(--c-text);font-weight:700;margin-bottom:16px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature-card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;padding:32px;transition:all .25s;position:relative;overflow:hidden}
+.feature-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--c-neon4),var(--c-neon1));transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.feature-card:hover::after{transform:scaleX(1)}.feature-card:hover{border-color:rgba(0,245,255,.3);transform:translateY(-4px)}
+.feature-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:20px;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2)}
 .feature-title{font-family:var(--font-title);font-size:1.4rem;letter-spacing:1px;margin-bottom:10px}
 .feature-desc{color:var(--c-muted);font-size:.9rem;line-height:1.7}
-
-/* ═══════════════════════════════════════════════
-   TABS
-═══════════════════════════════════════════════ */
-.tabs{display:flex;gap:0;border-bottom:1px solid var(--c-border);margin-bottom:40px}
-.tab{
-  padding:14px 28px;cursor:pointer;
-  font-size:.85rem;font-weight:700;letter-spacing:1px;
-  text-transform:uppercase;color:var(--c-muted);
-  border-bottom:2px solid transparent;margin-bottom:-1px;
-  transition:all .2s;
-}
-.tab:hover{color:var(--c-text)}
-.tab.active{color:var(--c-neon1);border-bottom-color:var(--c-neon1)}
-
-/* ═══════════════════════════════════════════════
-   FOOTER
-═══════════════════════════════════════════════ */
-footer{
-  background:var(--c-bg2);
-  border-top:1px solid var(--c-border);
-  padding:60px 0 30px;
-}
-.footer-grid{
-  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;
-  margin-bottom:40px;
-}
-.footer-brand .nav-logo{font-size:2rem;display:block;margin-bottom:12px}
-.footer-brand p{color:var(--c-muted);font-size:.9rem;max-width:280px;line-height:1.7}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--c-bg2);border:1px solid var(--c-border);border-radius:16px;padding:40px;width:100%;max-width:420px;position:relative}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--c-muted);font-size:1.4rem;cursor:pointer;transition:color .2s}.modal-close:hover{color:var(--c-text)}
+.modal-title{font-family:var(--font-title);font-size:2rem;letter-spacing:2px;margin-bottom:8px}
+.modal-sub{color:var(--c-muted);font-size:.9rem;margin-bottom:28px}
+.modal-tabs{display:flex;border-bottom:1px solid var(--c-border);margin-bottom:28px}
+.modal-tab{padding:10px 24px;cursor:pointer;font-size:.85rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--c-muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.modal-tab.active{color:var(--c-neon1);border-bottom-color:var(--c-neon1)}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:.8rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--c-muted);margin-bottom:8px}
+.form-group input,.form-group select{width:100%;background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--radius);padding:11px 16px;color:var(--c-text);font-family:var(--font-ui);font-size:.95rem;transition:border-color .2s;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--c-neon1)}
+.form-error{color:var(--c-neon2);font-size:.8rem;margin-top:8px;display:none}.form-error.show{display:block}
+.toast{position:fixed;bottom:28px;right:28px;z-index:300;background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:14px 20px;font-size:.9rem;font-weight:600;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}.toast.success{border-color:var(--c-neon1);color:var(--c-neon1)}.toast.error{border-color:var(--c-neon2);color:var(--c-neon2)}
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--c-muted);font-size:.9rem;letter-spacing:2px;text-transform:uppercase}
+.spin{width:24px;height:24px;border:2px solid var(--c-border);border-top-color:var(--c-neon1);border-radius:50%;animation:spin .8s linear infinite;margin-right:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:60px;color:var(--c-muted)}.empty-state .empty-icon{font-size:3rem;margin-bottom:16px}.empty-state p{font-size:.9rem}
+footer{background:var(--c-bg2);border-top:1px solid var(--c-border);padding:60px 0 30px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-col h4{font-family:var(--font-title);font-size:1rem;letter-spacing:2px;margin-bottom:16px}
+.footer-col a{display:block;color:var(--c-muted);font-size:.875rem;margin-bottom:10px;transition:color .2s;cursor:pointer}.footer-col a:hover{color:var(--c-neon1)}
 .footer-social{display:flex;gap:12px;margin-top:20px}
-.social-btn{
-  width:36px;height:36px;border-radius:8px;
-  border:1px solid var(--c-border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--c-muted);font-size:1rem;
-  transition:all .2s;
-}
-.social-btn:hover{border-color:var(--c-neon1);color:var(--c-neon1);background:rgba(0,245,255,.06)}
-.footer-col h4{
-  font-family:var(--font-title);font-size:1rem;letter-spacing:2px;
-  margin-bottom:16px;color:var(--c-text);
-}
-.footer-col a{
-  display:block;color:var(--c-muted);font-size:.875rem;
-  margin-bottom:10px;transition:color .2s;
-}
-.footer-col a:hover{color:var(--c-neon1)}
-.footer-bottom{
-  display:flex;align-items:center;justify-content:space-between;
-  padding-top:24px;border-top:1px solid var(--c-border);
-  font-size:.8rem;color:var(--c-muted);
-}
-.footer-bottom span{color:var(--c-neon2)}
-
-/* ═══════════════════════════════════════════════
-   PAGE SECTIONS VISIBILITY
-═══════════════════════════════════════════════ */
-.page{display:none}
-.page.active{display:block}
-
-/* ═══════════════════════════════════════════════
-   UTILITY
-═══════════════════════════════════════════════ */
-.text-neon1{color:var(--c-neon1)}
-.text-neon2{color:var(--c-neon2)}
-.text-neon3{color:var(--c-neon3)}
-.gap-top{margin-top:24px}
-.flex-between{display:flex;align-items:center;justify-content:space-between}
-
-/* ═══════════════════════════════════════════════
-   RESPONSIVE BASICS
-═══════════════════════════════════════════════ */
-@media(max-width:900px){
-  nav{padding:0 20px}
-  .nav-links{display:none}
-  .container{padding:0 20px}
-  .hero-visual{display:none}
-  .features-grid{grid-template-columns:1fr}
-  .footer-grid{grid-template-columns:1fr 1fr}
-  .lb-header,.lb-row{grid-template-columns:50px 1fr 80px 80px}
-  .lb-header>*:last-child,.lb-row>*:last-child{display:none}
-}
-@media(max-width:600px){
-  .hero-stats{gap:20px}
-  .tournaments-grid{grid-template-columns:1fr}
-  .shop-grid{grid-template-columns:repeat(2,1fr)}
-  .footer-grid{grid-template-columns:1fr}
-}
+.social-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--c-border);display:flex;align-items:center;justify-content:center;color:var(--c-muted);transition:all .2s;cursor:pointer}.social-btn:hover{border-color:var(--c-neon1);color:var(--c-neon1)}
+@media(max-width:900px){nav{padding:0 20px}.nav-links{display:none}.container{padding:0 20px}.hero-visual{display:none}.features-grid{grid-template-columns:1fr}.footer-grid{grid-template-columns:1fr 1fr}.lb-header,.lb-row{grid-template-columns:50px 1fr 80px 80px}.lb-header>*:last-child,.lb-row>*:last-child{display:none}}
+@media(max-width:600px){.tournaments-grid{grid-template-columns:1fr}.shop-grid{grid-template-columns:repeat(2,1fr)}.footer-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
-<!-- ── BG EFFECTS ── -->
 <div class="grid-bg"></div>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
+<div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+<div class="toast" id="toast"></div>
 
-<!-- ══════════════════════════════════════════
-     NAVBAR
-══════════════════════════════════════════ -->
-<nav>
-  <a class="nav-logo" href="#" onclick="showPage('home')">ELITE<span>ARENA</span></a>
-  <div class="nav-links">
-    <a href="#" class="active" id="nav-home"    onclick="showPage('home');setActive('home')">Home</a>
-    <a href="#" id="nav-tournaments"            onclick="showPage('tournaments');setActive('tournaments')">Tournaments</a>
-    <a href="#" id="nav-matches"                onclick="showPage('matches');setActive('matches')">Live Matches</a>
-    <a href="#" id="nav-leaderboard"            onclick="showPage('leaderboard');setActive('leaderboard')">Leaderboard</a>
-    <a href="#" id="nav-shop"                   onclick="showPage('shop');setActive('shop')">Shop</a>
-  </div>
-  <div class="nav-actions">
-    <button class="btn btn-ghost">Log In</button>
-    <button class="btn btn-primary">Sign Up Free</button>
-  </div>
-</nav>
-
-<!-- ══════════════════════════════════════════
-     LIVE TICKER
-══════════════════════════════════════════ -->
-<div class="ticker-wrap">
-  <div class="ticker-track">
-    <div class="ticker-item"><span class="dot">●</span> <strong>FN Solos Cup</strong> — Prize: <span class="prize">500 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>Warzone Duos</strong> — Prize: <span class="prize">1,200 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>FN Box Fight</strong> — Prize: <span class="prize">750 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>Rocket League 2v2</strong> — Prize: <span class="prize">800 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>Valorant 5v5</strong> — Prize: <span class="prize">2,000 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>FN Zone Wars</strong> — Prize: <span class="prize">600 TOKENS</span></div>
-    <!-- duplicate for infinite loop -->
-    <div class="ticker-item"><span class="dot">●</span> <strong>FN Solos Cup</strong> — Prize: <span class="prize">500 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>Warzone Duos</strong> — Prize: <span class="prize">1,200 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>FN Box Fight</strong> — Prize: <span class="prize">750 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>Rocket League 2v2</strong> — Prize: <span class="prize">800 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>Valorant 5v5</strong> — Prize: <span class="prize">2,000 TOKENS</span></div>
-    <div class="ticker-item"><span class="dot">●</span> <strong>FN Zone Wars</strong> — Prize: <span class="prize">600 TOKENS</span></div>
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">BIENVENUE</div>
+    <div class="modal-sub">Rejoins 81,000+ joueurs sur EliteArena</div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchModalTab('login')">Connexion</div>
+      <div class="modal-tab" onclick="switchModalTab('register')">Inscription</div>
+    </div>
+    <div id="formLogin">
+      <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="ton@email.com"></div>
+      <div class="form-group"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+      <div class="form-error" id="loginError"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px;justify-content:center" onclick="handleLogin()">Se connecter</button>
+    </div>
+    <div id="formRegister" style="display:none">
+      <div class="form-group"><label>Pseudo</label><input type="text" id="regUsername" placeholder="TonPseudo_FN"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="ton@email.com"></div>
+      <div class="form-group"><label>Mot de passe</label><input type="password" id="regPassword" placeholder="6 caractères minimum"></div>
+      <div class="form-group"><label>Jeu principal</label>
+        <select id="regGame">
+          <option value="fortnite">Fortnite</option>
+          <option value="warzone">Warzone</option>
+          <option value="valorant">Valorant</option>
+          <option value="rocket_league">Rocket League</option>
+        </select>
+      </div>
+      <div class="form-error" id="regError"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px;justify-content:center" onclick="handleRegister()">Créer mon compte</button>
+    </div>
   </div>
 </div>
 
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home');setActive('home')">ELITE<span>ARENA</span></div>
+  <div class="nav-links">
+    <a class="active" id="nav-home" onclick="showPage('home');setActive('home')">Home</a>
+    <a id="nav-tournaments" onclick="showPage('tournaments');setActive('tournaments')">Tournaments</a>
+    <a id="nav-matches" onclick="showPage('matches');setActive('matches')">Live Matches</a>
+    <a id="nav-leaderboard" onclick="showPage('leaderboard');setActive('leaderboard')">Leaderboard</a>
+    <a id="nav-shop" onclick="showPage('shop');setActive('shop')">Shop</a>
+  </div>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-ghost" onclick="openModal('login')">Log In</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Sign Up Free</button>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-wrap"><div class="ticker-track">
+  <div class="ticker-item"><span class="dot">●</span><strong>FN Solos Cup</strong> — <span class="prize">500 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>Warzone Duos</strong> — <span class="prize">1,200 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>FN Box Fight</strong> — <span class="prize">750 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>Rocket League 2v2</strong> — <span class="prize">800 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>Valorant 5v5</strong> — <span class="prize">2,000 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>FN Solos Cup</strong> — <span class="prize">500 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>Warzone Duos</strong> — <span class="prize">1,200 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>FN Box Fight</strong> — <span class="prize">750 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>Rocket League 2v2</strong> — <span class="prize">800 T</span></div>
+  <div class="ticker-item"><span class="dot">●</span><strong>Valorant 5v5</strong> — <span class="prize">2,000 T</span></div>
+</div></div>
+
 <main>
-
-<!-- ══════════════════════════════════════════
-     PAGE : HOME
-══════════════════════════════════════════ -->
+<!-- HOME -->
 <div class="page active" id="page-home">
-
-  <!-- HERO -->
   <section class="hero">
     <div class="container">
       <div class="hero-content">
-        <div class="hero-badge">
-          <span class="pulse-dot"></span>
-          81,000+ Players Active
-        </div>
-        <h1>
-          COMPETE.<br>
-          <span class="accent-cyan">WIN.</span>
-          <span class="accent-pink">DOM</span><span class="accent-yellow">INATE</span>.
-        </h1>
-        <p>Rejoins la meilleure plateforme de tournois esport — Fortnite, Warzone, Valorant & plus. Gagne de vrais tokens, retire en cash.</p>
+        <div class="hero-badge"><span class="pulse-dot"></span>81,000+ Players Active</div>
+        <h1>COMPETE.<br><span class="accent-cyan">WIN.</span> <span class="accent-pink">DOM</span><span class="accent-yellow">INATE</span>.</h1>
+        <p>La meilleure plateforme de tournois esport — Fortnite, Warzone, Valorant & plus. Gagne de vrais tokens, retire en cash.</p>
         <div class="hero-cta">
           <button class="btn btn-primary" style="font-size:.95rem;padding:13px 32px" onclick="showPage('tournaments');setActive('tournaments')">🏆 Voir les Tournois</button>
-          <button class="btn btn-ghost" style="font-size:.95rem;padding:13px 32px">▶ Comment ça marche</button>
+          <button class="btn btn-ghost" style="font-size:.95rem;padding:13px 32px" onclick="openModal('register')">▶ Rejoindre gratuitement</button>
         </div>
         <div class="hero-stats">
-          <div class="stat">
-            <div class="stat-value" id="cnt-players">81,247</div>
-            <div class="stat-label">Joueurs</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">$124K</div>
-            <div class="stat-label">Tokens distribués</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">5</div>
-            <div class="stat-label">Jeux disponibles</div>
-          </div>
+          <div class="stat"><div class="stat-value" id="cnt-players">0</div><div class="stat-label">Joueurs</div></div>
+          <div class="stat"><div class="stat-value" id="cnt-tokens">0</div><div class="stat-label">Tokens distribués</div></div>
+          <div class="stat"><div class="stat-value">5</div><div class="stat-label">Jeux</div></div>
         </div>
       </div>
     </div>
-    <!-- visual -->
     <div class="hero-visual">
-      <div class="ring ring-1"></div>
-      <div class="ring ring-2"></div>
-      <div class="ring ring-3"></div>
-      <div class="hero-visual-inner">
-        <div class="hero-trophy">🏆</div>
-      </div>
+      <div class="ring ring-1"></div><div class="ring ring-2"></div><div class="ring ring-3"></div>
+      <div class="hero-visual-inner"><div class="hero-trophy">🏆</div></div>
     </div>
   </section>
-
   <div class="divider"></div>
-
-  <!-- FEATURES -->
-  <section>
-    <div class="container">
-      <div class="section-header">
-        <div class="section-tag">Pourquoi EliteArena ?</div>
-        <h2 class="section-title">LA PLATEFORME QUI <span class="hi">PAIE</span></h2>
-        <p class="section-sub">Tout ce qu'il te faut pour dominer et encaisser tes gains.</p>
-      </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🎮</div>
-          <div class="feature-title">MULTI-JEUX</div>
-          <p class="feature-desc">Fortnite, Warzone, Valorant, Rocket League, Minecraft & plus. Compétitif sur toutes les plateformes — PC et console.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">💰</div>
-          <div class="feature-title">GAINS RÉELS</div>
-          <p class="feature-desc">Les tokens sont convertibles en cash réel. Retrait immédiat après victoire via PayPal, crypto ou carte cadeau.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">⚡</div>
-          <div class="feature-title">TOURNOIS QUOTIDIENS</div>
-          <p class="feature-desc">Plusieurs tournois lancés chaque jour. Toutes les régions, tous les niveaux — du casual au pro.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🛡️</div>
-          <div class="feature-title">ANTI-CHEAT</div>
-          <p class="feature-desc">Système de détection avancé, arbitrage humain et signalement communautaire pour garantir des parties équitables.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <div class="feature-title">STATS AVANCÉES</div>
-          <p class="feature-desc">Suis ta progression, tes K/D, ton ratio victoires, et compare-toi au leaderboard mondial en temps réel.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🤝</div>
-          <div class="feature-title">COMMUNAUTÉ</div>
-          <p class="feature-desc">+216k membres Discord. Trouve des coéquipiers, partage tes clips, rejoins des scrims privés organisés chaque semaine.</p>
-        </div>
-      </div>
+  <section><div class="container">
+    <div class="section-header">
+      <div class="section-tag">Pourquoi EliteArena ?</div>
+      <h2 class="section-title">LA PLATEFORME QUI <span class="hi">PAIE</span></h2>
     </div>
-  </section>
-
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">🎮</div><div class="feature-title">MULTI-JEUX</div><p class="feature-desc">Fortnite, Warzone, Valorant, Rocket League & plus. PC et console.</p></div>
+      <div class="feature-card"><div class="feature-icon">💰</div><div class="feature-title">GAINS RÉELS</div><p class="feature-desc">Tokens convertibles en cash. Retrait immédiat après victoire.</p></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">TOURNOIS QUOTIDIENS</div><p class="feature-desc">Plusieurs tournois chaque jour. Toutes régions, tous niveaux.</p></div>
+      <div class="feature-card"><div class="feature-icon">🛡️</div><div class="feature-title">ANTI-CHEAT</div><p class="feature-desc">Détection avancée et arbitrage humain pour des parties équitables.</p></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">STATS AVANCÉES</div><p class="feature-desc">Suis ta progression et compare-toi au leaderboard mondial.</p></div>
+      <div class="feature-card"><div class="feature-icon">🤝</div><div class="feature-title">COMMUNAUTÉ</div><p class="feature-desc">+216k membres Discord. Trouve des coéquipiers, partage tes clips.</p></div>
+    </div>
+  </div></section>
   <div class="divider"></div>
-
-  <!-- FEATURED TOURNAMENTS PREVIEW -->
-  <section>
-    <div class="container">
-      <div class="flex-between" style="margin-bottom:40px">
-        <div>
-          <div class="section-tag">En ce moment</div>
-          <h2 class="section-title">TOURNOIS <span class="hi">CHAUDS</span></h2>
-        </div>
-        <button class="btn btn-ghost" onclick="showPage('tournaments');setActive('tournaments')">Voir tout →</button>
-      </div>
-      <div class="tournaments-grid">
-        <!-- card 1 -->
-        <div class="t-card" onclick="showPage('tournaments');setActive('tournaments')">
-          <div class="t-card-banner fn">
-            <span class="t-card-banner-icon">⚡</span>
-            <div class="t-card-live-badge"><span class="pulse-dot"></span> LIVE</div>
-          </div>
-          <div class="t-card-body">
-            <div class="t-card-game">Fortnite</div>
-            <div class="t-card-name">FRIDAY SOLOS CUP</div>
-            <div class="t-card-meta">
-              <div class="meta-chip">👤 Solo</div>
-              <div class="meta-chip">🌍 EU</div>
-              <div class="meta-chip">🆓 Free</div>
-            </div>
-            <div class="t-card-footer">
-              <div class="prize-pool">
-                <span class="prize-label">Prize Pool</span>
-                <span class="prize-amount">500 T</span>
-              </div>
-              <div class="slots-info">
-                73 / 128 slots
-                <div class="slots-bar"><div class="slots-fill" style="width:57%"></div></div>
-              </div>
-            </div>
-          </div>
-          <div class="t-card-progress">
-            <div class="progress-label"><span>Progression</span><span>57%</span></div>
-            <div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
-          </div>
-        </div>
-        <!-- card 2 -->
-        <div class="t-card" onclick="showPage('tournaments');setActive('tournaments')">
-          <div class="t-card-banner wz">
-            <span class="t-card-banner-icon">💀</span>
-            <div class="t-card-soon">SOON</div>
-          </div>
-          <div class="t-card-body">
-            <div class="t-card-game">Warzone</div>
-            <div class="t-card-name">WARZONE DUOS SHOWDOWN</div>
-            <div class="t-card-meta">
-              <div class="meta-chip">👥 Duos</div>
-              <div class="meta-chip">🌍 NA</div>
-              <div class="meta-chip">🆓 Free</div>
-            </div>
-            <div class="t-card-footer">
-              <div class="prize-pool">
-                <span class="prize-label">Prize Pool</span>
-                <span class="prize-amount">1,200 T</span>
-              </div>
-              <div class="slots-info">
-                24 / 64 slots
-                <div class="slots-bar"><div class="slots-fill" style="width:37%"></div></div>
-              </div>
-            </div>
-          </div>
-          <div class="t-card-progress">
-            <div class="progress-label"><span>Inscriptions</span><span>37%</span></div>
-            <div class="progress-bar"><div class="progress-fill" style="width:37%"></div></div>
-          </div>
-        </div>
-        <!-- card 3 -->
-        <div class="t-card" onclick="showPage('tournaments');setActive('tournaments')">
-          <div class="t-card-banner va">
-            <span class="t-card-banner-icon">🎯</span>
-            <div class="t-card-live-badge"><span class="pulse-dot"></span> LIVE</div>
-          </div>
-          <div class="t-card-body">
-            <div class="t-card-game">Valorant</div>
-            <div class="t-card-name">VALORANT 5v5 ELITE</div>
-            <div class="t-card-meta">
-              <div class="meta-chip">🖐 5v5</div>
-              <div class="meta-chip">🌍 EU</div>
-              <div class="meta-chip">💎 Premium</div>
-            </div>
-            <div class="t-card-footer">
-              <div class="prize-pool">
-                <span class="prize-label">Prize Pool</span>
-                <span class="prize-amount">2,000 T</span>
-              </div>
-              <div class="slots-info">
-                8 / 16 slots
-                <div class="slots-bar"><div class="slots-fill" style="width:50%"></div></div>
-              </div>
-            </div>
-          </div>
-          <div class="t-card-progress">
-            <div class="progress-label"><span>Équipes inscrites</span><span>50%</span></div>
-            <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
-          </div>
-        </div>
-      </div>
+  <section><div class="container">
+    <div class="flex-between" style="margin-bottom:40px">
+      <div><div class="section-tag">En ce moment</div><h2 class="section-title">TOURNOIS <span class="hi">CHAUDS</span></h2></div>
+      <button class="btn btn-ghost" onclick="showPage('tournaments');setActive('tournaments')">Voir tout →</button>
     </div>
-  </section>
+    <div id="homeTournaments" class="tournaments-grid"><div class="loading"><div class="spin"></div>Chargement...</div></div>
+  </div></section>
+</div>
 
-</div><!-- /page-home -->
-
-
-<!-- ══════════════════════════════════════════
-     PAGE : TOURNAMENTS
-══════════════════════════════════════════ -->
+<!-- TOURNAMENTS -->
 <div class="page" id="page-tournaments">
-  <section style="padding-top:60px">
-    <div class="container">
-      <div class="section-header" style="text-align:left;margin-bottom:32px">
-        <div class="section-tag">EliteArena</div>
-        <h2 class="section-title">TOUS LES <span class="hi">TOURNOIS</span></h2>
-      </div>
-
-      <div class="tabs">
-        <div class="tab active">Tous</div>
-        <div class="tab">Fortnite</div>
-        <div class="tab">Warzone</div>
-        <div class="tab">Valorant</div>
-        <div class="tab">Rocket League</div>
-        <div class="tab">Autres</div>
-      </div>
-
-      <div class="filters">
-        <span class="filter-label">Filtres :</span>
-        <button class="filter-btn active">Tous</button>
-        <button class="filter-btn">🟢 Live</button>
-        <button class="filter-btn">⏳ À venir</button>
-        <button class="filter-btn">🆓 Gratuit</button>
-        <button class="filter-btn">💎 Premium</button>
-        <button class="filter-btn">👤 Solo</button>
-        <button class="filter-btn">👥 Duos</button>
-        <button class="filter-btn">🖐 Teams</button>
-      </div>
-
-      <div class="tournaments-grid">
-        <!-- FN 1 -->
-        <div class="t-card">
-          <div class="t-card-banner fn"><span class="t-card-banner-icon">⚡</span><div class="t-card-live-badge"><span class="pulse-dot"></span> LIVE</div></div>
-          <div class="t-card-body">
-            <div class="t-card-game">Fortnite</div>
-            <div class="t-card-name">FRIDAY SOLOS CUP</div>
-            <div class="t-card-meta"><div class="meta-chip">👤 Solo</div><div class="meta-chip">🌍 EU</div><div class="meta-chip">🆓 Free</div></div>
-            <div class="t-card-footer"><div class="prize-pool"><span class="prize-label">Prize Pool</span><span class="prize-amount">500 T</span></div><div class="slots-info">73/128<div class="slots-bar"><div class="slots-fill" style="width:57%"></div></div></div></div>
-          </div>
-          <div class="t-card-progress"><div class="progress-label"><span>Progression</span><span>57%</span></div><div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div></div>
-        </div>
-        <!-- FN 2 -->
-        <div class="t-card">
-          <div class="t-card-banner fn" style="background:linear-gradient(135deg,#0a2028,#0a4a5e,#00ccff)"><span class="t-card-banner-icon">🏹</span><div class="t-card-soon">SOON</div></div>
-          <div class="t-card-body">
-            <div class="t-card-game">Fortnite</div>
-            <div class="t-card-name">BOX FIGHT ARENA</div>
-            <div class="t-card-meta"><div class="meta-chip">👥 Duos</div><div class="meta-chip">🌍 EU/NA</div><div class="meta-chip">🆓 Free</div></div>
-            <div class="t-card-footer"><div class="prize-pool"><span class="prize-label">Prize Pool</span><span class="prize-amount">750 T</span></div><div class="slots-info">12/64<div class="slots-bar"><div class="slots-fill" style="width:18%"></div></div></div></div>
-          </div>
-          <div class="t-card-progress"><div class="progress-label"><span>Inscriptions</span><span>18%</span></div><div class="progress-bar"><div class="progress-fill" style="width:18%"></div></div></div>
-        </div>
-        <!-- FN Zone Wars -->
-        <div class="t-card">
-          <div class="t-card-banner fn" style="background:linear-gradient(135deg,#1a1a0a,#3a3a0a,#aaaa00)"><span class="t-card-banner-icon">💥</span><div class="t-card-live-badge"><span class="pulse-dot"></span> LIVE</div></div>
-          <div class="t-card-body">
-            <div class="t-card-game">Fortnite</div>
-            <div class="t-card-name">ZONE WARS SUNDAY</div>
-            <div class="t-card-meta"><div class="meta-chip">👤 Solo</div><div class="meta-chip">🌍 EU</div><div class="meta-chip">🆓 Free</div></div>
-            <div class="t-card-footer"><div class="prize-pool"><span class="prize-label">Prize Pool</span><span class="prize-amount">600 T</span></div><div class="slots-info">96/128<div class="slots-bar"><div class="slots-fill" style="width:75%"></div></div></div></div>
-          </div>
-          <div class="t-card-progress"><div class="progress-label"><span>Places restantes</span><span>75%</span></div><div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div></div>
-        </div>
-        <!-- WZ -->
-        <div class="t-card">
-          <div class="t-card-banner wz"><span class="t-card-banner-icon">💀</span><div class="t-card-soon">SOON</div></div>
-          <div class="t-card-body">
-            <div class="t-card-game">Warzone</div>
-            <div class="t-card-name">WARZONE DUOS SHOWDOWN</div>
-            <div class="t-card-meta"><div class="meta-chip">👥 Duos</div><div class="meta-chip">🌍 NA</div><div class="meta-chip">🆓 Free</div></div>
-            <div class="t-card-footer"><div class="prize-pool"><span class="prize-label">Prize Pool</span><span class="prize-amount">1,200 T</span></div><div class="slots-info">24/64<div class="slots-bar"><div class="slots-fill" style="width:37%"></div></div></div></div>
-          </div>
-          <div class="t-card-progress"><div class="progress-label"><span>Inscriptions</span><span>37%</span></div><div class="progress-bar"><div class="progress-fill" style="width:37%"></div></div></div>
-        </div>
-        <!-- Rocket League -->
-        <div class="t-card">
-          <div class="t-card-banner rl"><span class="t-card-banner-icon">🚗</span><div class="t-card-live-badge"><span class="pulse-dot"></span> LIVE</div></div>
-          <div class="t-card-body">
-            <div class="t-card-game">Rocket League</div>
-            <div class="t-card-name">RL 2v2 THROWDOWN</div>
-            <div class="t-card-meta"><div class="meta-chip">👥 2v2</div><div class="meta-chip">🌍 EU</div><div class="meta-chip">🆓 Free</div></div>
-            <div class="t-card-footer"><div class="prize-pool"><span class="prize-label">Prize Pool</span><span class="prize-amount">800 T</span></div><div class="slots-info">28/32<div class="slots-bar"><div class="slots-fill" style="width:87%"></div></div></div></div>
-          </div>
-          <div class="t-card-progress"><div class="progress-label"><span>Presque complet!</span><span>87%</span></div><div class="progress-bar"><div class="progress-fill" style="width:87%"></div></div></div>
-        </div>
-        <!-- Valorant -->
-        <div class="t-card">
-          <div class="t-card-banner va"><span class="t-card-banner-icon">🎯</span><div class="t-card-live-badge"><span class="pulse-dot"></span> LIVE</div></div>
-          <div class="t-card-body">
-            <div class="t-card-game">Valorant</div>
-            <div class="t-card-name">VALORANT 5v5 ELITE</div>
-            <div class="t-card-meta"><div class="meta-chip">🖐 5v5</div><div class="meta-chip">🌍 EU</div><div class="meta-chip">💎 Premium</div></div>
-            <div class="t-card-footer"><div class="prize-pool"><span class="prize-label">Prize Pool</span><span class="prize-amount">2,000 T</span></div><div class="slots-info">8/16<div class="slots-bar"><div class="slots-fill" style="width:50%"></div></div></div></div>
-          </div>
-          <div class="t-card-progress"><div class="progress-label"><span>Équipes</span><span>50%</span></div><div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div></div>
-        </div>
-      </div>
+  <section style="padding-top:60px"><div class="container">
+    <div style="margin-bottom:32px"><div class="section-tag">EliteArena</div><h2 class="section-title">TOUS LES <span class="hi">TOURNOIS</span></h2></div>
+    <div class="filters">
+      <span class="filter-label">Jeu :</span>
+      <button class="filter-btn active" onclick="filterTournaments('all',this)">Tous</button>
+      <button class="filter-btn" onclick="filterTournaments('fortnite',this)">Fortnite</button>
+      <button class="filter-btn" onclick="filterTournaments('warzone',this)">Warzone</button>
+      <button class="filter-btn" onclick="filterTournaments('valorant',this)">Valorant</button>
+      <button class="filter-btn" onclick="filterTournaments('rocket_league',this)">Rocket League</button>
     </div>
-  </section>
-</div><!-- /page-tournaments -->
+    <div id="allTournaments" class="tournaments-grid"><div class="loading"><div class="spin"></div>Chargement depuis Supabase...</div></div>
+  </div></section>
+</div>
 
-
-<!-- ══════════════════════════════════════════
-     PAGE : LIVE MATCHES
-══════════════════════════════════════════ -->
+<!-- MATCHES -->
 <div class="page" id="page-matches">
-  <section style="padding-top:60px">
-    <div class="container">
-      <div class="section-header" style="text-align:left;margin-bottom:40px">
-        <div class="section-tag">En direct</div>
-        <h2 class="section-title">LIVE <span class="hi">MATCHES</span></h2>
-      </div>
+  <section style="padding-top:60px"><div class="container">
+    <div style="margin-bottom:40px"><div class="section-tag">En direct</div><h2 class="section-title">LIVE <span class="hi">MATCHES</span></h2></div>
+    <div id="liveMatches" class="matches-list"><div class="loading"><div class="spin"></div>Chargement des matchs live...</div></div>
+  </div></section>
+</div>
 
-      <div class="filters" style="margin-bottom:28px">
-        <span class="filter-label">Jeu :</span>
-        <button class="filter-btn active">Tous</button>
-        <button class="filter-btn">Fortnite</button>
-        <button class="filter-btn">Warzone</button>
-        <button class="filter-btn">Valorant</button>
-        <button class="filter-btn">Rocket League</button>
-      </div>
-
-      <div class="matches-list">
-        <div class="match-card">
-          <div class="match-live-dot"></div>
-          <div class="match-teams">
-            <div class="team"><div class="team-icon">🦅</div><div class="team-name">NightHawks</div></div>
-            <div class="vs-badge">VS</div>
-            <div class="team"><div class="team-icon">🐉</div><div class="team-name">DragonSlayer</div></div>
-          </div>
-          <div class="match-score">
-            <span class="score-a">7</span>
-            <span class="score-sep">—</span>
-            <span class="score-b">5</span>
-          </div>
-          <div class="match-meta">
-            <span class="match-game-tag">FORTNITE</span>
-            <span>Box Fight · EU</span>
-            <span style="font-family:var(--font-mono);color:var(--c-neon2)">⏱ 14:22</span>
-          </div>
-        </div>
-        <div class="match-card">
-          <div class="match-live-dot"></div>
-          <div class="match-teams">
-            <div class="team"><div class="team-icon">⚡</div><div class="team-name">ThunderBolts</div></div>
-            <div class="vs-badge">VS</div>
-            <div class="team"><div class="team-icon">🌊</div><div class="team-name">WaveRiders</div></div>
-          </div>
-          <div class="match-score">
-            <span class="score-a">3</span>
-            <span class="score-sep">—</span>
-            <span class="score-b">3</span>
-          </div>
-          <div class="match-meta">
-            <span class="match-game-tag">VALORANT</span>
-            <span>5v5 · EU</span>
-            <span style="font-family:var(--font-mono);color:var(--c-neon2)">⏱ 32:07</span>
-          </div>
-        </div>
-        <div class="match-card">
-          <div class="match-live-dot"></div>
-          <div class="match-teams">
-            <div class="team"><div class="team-icon">🔥</div><div class="team-name">FireStorm</div></div>
-            <div class="vs-badge">VS</div>
-            <div class="team"><div class="team-icon">❄️</div><div class="team-name">IceCrushers</div></div>
-          </div>
-          <div class="match-score">
-            <span class="score-a">2</span>
-            <span class="score-sep">—</span>
-            <span class="score-b">1</span>
-          </div>
-          <div class="match-meta">
-            <span class="match-game-tag">ROCKET LEAGUE</span>
-            <span>2v2 · EU</span>
-            <span style="font-family:var(--font-mono);color:var(--c-neon2)">⏱ 04:15</span>
-          </div>
-        </div>
-        <div class="match-card">
-          <div class="match-live-dot"></div>
-          <div class="match-teams">
-            <div class="team"><div class="team-icon">👻</div><div class="team-name">GhostTeam</div></div>
-            <div class="vs-badge">VS</div>
-            <div class="team"><div class="team-icon">💀</div><div class="team-name">SkullCrew</div></div>
-          </div>
-          <div class="match-score">
-            <span class="score-a">12</span>
-            <span class="score-sep">—</span>
-            <span class="score-b">9</span>
-          </div>
-          <div class="match-meta">
-            <span class="match-game-tag">WARZONE</span>
-            <span>Duos · NA</span>
-            <span style="font-family:var(--font-mono);color:var(--c-neon2)">⏱ 22:48</span>
-          </div>
-        </div>
-        <div class="match-card">
-          <div class="match-live-dot"></div>
-          <div class="match-teams">
-            <div class="team"><div class="team-icon">🦁</div><div class="team-name">LionheartFN</div></div>
-            <div class="vs-badge">VS</div>
-            <div class="team"><div class="team-icon">🐺</div><div class="team-name">WolfpackFN</div></div>
-          </div>
-          <div class="match-score">
-            <span class="score-a">4</span>
-            <span class="score-sep">—</span>
-            <span class="score-b">6</span>
-          </div>
-          <div class="match-meta">
-            <span class="match-game-tag">FORTNITE</span>
-            <span>Zone Wars · EU</span>
-            <span style="font-family:var(--font-mono);color:var(--c-neon2)">⏱ 08:30</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-</div><!-- /page-matches -->
-
-
-<!-- ══════════════════════════════════════════
-     PAGE : LEADERBOARD
-══════════════════════════════════════════ -->
+<!-- LEADERBOARD -->
 <div class="page" id="page-leaderboard">
-  <section style="padding-top:60px">
-    <div class="container">
-      <div class="section-header" style="text-align:left;margin-bottom:40px">
-        <div class="section-tag">Classement mondial</div>
-        <h2 class="section-title">LEADER<span class="hi">BOARD</span></h2>
+  <section style="padding-top:60px"><div class="container">
+    <div style="margin-bottom:40px"><div class="section-tag">Classement mondial</div><h2 class="section-title">LEADER<span class="hi">BOARD</span></h2></div>
+    <div class="leaderboard-table">
+      <div class="lb-header">
+        <div style="text-align:center">#</div><div>Joueur</div>
+        <div style="text-align:center">Victoires</div><div style="text-align:center">K/D</div><div style="text-align:center">Tokens</div>
       </div>
-
-      <div class="tabs">
-        <div class="tab active">Global</div>
-        <div class="tab">Fortnite</div>
-        <div class="tab">Warzone</div>
-        <div class="tab">Valorant</div>
-        <div class="tab">Mensuel</div>
-      </div>
-
-      <div class="leaderboard-table">
-        <div class="lb-header">
-          <div style="text-align:center">#</div>
-          <div>Joueur</div>
-          <div style="text-align:center">Victoires</div>
-          <div style="text-align:center">K/D</div>
-          <div style="text-align:center">Gains</div>
-        </div>
-        <!-- rows -->
-        <div class="lb-row top-1">
-          <div class="lb-rank rank-gold">🥇</div>
-          <div class="lb-player"><div class="lb-avatar" style="background:rgba(255,226,52,.15);border-color:rgba(255,226,52,.4)">👑</div><div><div class="lb-name">NightHawk_FN</div><div class="lb-tag">#7829</div></div></div>
-          <div class="lb-val lb-wins">142</div>
-          <div class="lb-val lb-kd">8.4</div>
-          <div class="lb-val lb-earnings">12,450 T</div>
-        </div>
-        <div class="lb-row top-2">
-          <div class="lb-rank rank-silver">🥈</div>
-          <div class="lb-player"><div class="lb-avatar" style="background:rgba(192,192,192,.1);border-color:rgba(192,192,192,.3)">⚔️</div><div><div class="lb-name">ProSlayer99</div><div class="lb-tag">#1234</div></div></div>
-          <div class="lb-val lb-wins">128</div>
-          <div class="lb-val lb-kd">7.1</div>
-          <div class="lb-val lb-earnings">9,800 T</div>
-        </div>
-        <div class="lb-row top-3">
-          <div class="lb-rank rank-bronze">🥉</div>
-          <div class="lb-player"><div class="lb-avatar" style="background:rgba(205,127,50,.1);border-color:rgba(205,127,50,.3)">🔥</div><div><div class="lb-name">FireStorm_EU</div><div class="lb-tag">#5521</div></div></div>
-          <div class="lb-val lb-wins">115</div>
-          <div class="lb-val lb-kd">6.8</div>
-          <div class="lb-val lb-earnings">8,200 T</div>
-        </div>
-        <div class="lb-row"><div class="lb-rank rank-std">4</div><div class="lb-player"><div class="lb-avatar">⚡</div><div><div class="lb-name">ThunderGod</div><div class="lb-tag">#3310</div></div></div><div class="lb-val lb-wins">98</div><div class="lb-val lb-kd">6.2</div><div class="lb-val lb-earnings">6,750 T</div></div>
-        <div class="lb-row"><div class="lb-rank rank-std">5</div><div class="lb-player"><div class="lb-avatar">🐉</div><div><div class="lb-name">DragonKing_FN</div><div class="lb-tag">#8801</div></div></div><div class="lb-val lb-wins">91</div><div class="lb-val lb-kd">5.9</div><div class="lb-val lb-earnings">5,900 T</div></div>
-        <div class="lb-row"><div class="lb-rank rank-std">6</div><div class="lb-player"><div class="lb-avatar">🌊</div><div><div class="lb-name">WaveRider_NA</div><div class="lb-tag">#2247</div></div></div><div class="lb-val lb-wins">87</div><div class="lb-val lb-kd">5.5</div><div class="lb-val lb-earnings">5,400 T</div></div>
-        <div class="lb-row"><div class="lb-rank rank-std">7</div><div class="lb-player"><div class="lb-avatar">🦅</div><div><div class="lb-name">EagleEye_EU</div><div class="lb-tag">#9921</div></div></div><div class="lb-val lb-wins">82</div><div class="lb-val lb-kd">5.1</div><div class="lb-val lb-earnings">4,800 T</div></div>
-        <div class="lb-row"><div class="lb-rank rank-std">8</div><div class="lb-player"><div class="lb-avatar">💎</div><div><div class="lb-name">DiamondHands</div><div class="lb-tag">#4412</div></div></div><div class="lb-val lb-wins">79</div><div class="lb-val lb-kd">4.9</div><div class="lb-val lb-earnings">4,200 T</div></div>
-        <div class="lb-row"><div class="lb-rank rank-std">9</div><div class="lb-player"><div class="lb-avatar">🌙</div><div><div class="lb-name">MoonWalker</div><div class="lb-tag">#6630</div></div></div><div class="lb-val lb-wins">74</div><div class="lb-val lb-kd">4.7</div><div class="lb-val lb-earnings">3,800 T</div></div>
-        <div class="lb-row"><div class="lb-rank rank-std">10</div><div class="lb-player"><div class="lb-avatar">🐺</div><div><div class="lb-name">WolfPackLeader</div><div class="lb-tag">#1198</div></div></div><div class="lb-val lb-wins">68</div><div class="lb-val lb-kd">4.4</div><div class="lb-val lb-earnings">3,200 T</div></div>
-      </div>
-
-      <div style="margin-top:20px;text-align:center">
-        <button class="btn btn-ghost">Voir le classement complet (500+)</button>
-      </div>
+      <div id="leaderboardRows"><div class="loading"><div class="spin"></div>Chargement...</div></div>
     </div>
-  </section>
-</div><!-- /page-leaderboard -->
+  </div></section>
+</div>
 
-
-<!-- ══════════════════════════════════════════
-     PAGE : SHOP
-══════════════════════════════════════════ -->
+<!-- SHOP -->
 <div class="page" id="page-shop">
-  <section style="padding-top:60px">
-    <div class="container">
-      <div class="section-header" style="text-align:left;margin-bottom:40px">
-        <div class="section-tag">Marketplace</div>
-        <h2 class="section-title">TOKEN <span class="hi">SHOP</span></h2>
+  <section style="padding-top:60px"><div class="container">
+    <div style="margin-bottom:40px"><div class="section-tag">Marketplace</div><h2 class="section-title">TOKEN <span class="hi">SHOP</span></h2></div>
+    <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:20px 28px;margin-bottom:40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div>
+        <div style="font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);margin-bottom:4px">Ton solde</div>
+        <div style="font-family:var(--font-title);font-size:2rem;color:var(--c-neon3)">💰 <span id="userTokensDisplay">0</span> TOKENS</div>
       </div>
-
-      <!-- balance bar -->
-      <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:20px 28px;margin-bottom:40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
-        <div>
-          <div style="font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--c-muted);margin-bottom:4px">Ton solde</div>
-          <div style="font-family:var(--font-title);font-size:2rem;color:var(--c-neon3)">💰 0 TOKENS</div>
+      <div style="display:flex;gap:12px"><button class="btn btn-ghost">📤 Retirer</button><button class="btn btn-primary">+ Acheter</button></div>
+    </div>
+    <div class="section-tag" style="margin-bottom:16px">Packs de tokens</div>
+    <div class="shop-grid">
+      <div class="shop-card"><span class="shop-tokens-icon">🪙</span><div class="shop-amount">100 T</div><div class="shop-bonus">Starter Pack</div><div class="shop-price">€0.99</div><button class="btn btn-ghost" style="width:100%" onclick="buyTokens(100)">Acheter</button></div>
+      <div class="shop-card"><span class="shop-tokens-icon">🥈</span><div class="shop-amount">550 T</div><div class="shop-bonus">+50 bonus</div><div class="shop-price">€4.49</div><button class="btn btn-ghost" style="width:100%" onclick="buyTokens(550)">Acheter</button></div>
+      <div class="shop-card featured"><span class="shop-badge-featured">BEST VALUE</span><span class="shop-tokens-icon">🥇</span><div class="shop-amount">1,400 T</div><div class="shop-bonus">+200 bonus inclus</div><div class="shop-price">€9.99</div><button class="btn btn-primary" style="width:100%" onclick="buyTokens(1400)">Acheter</button></div>
+      <div class="shop-card"><span class="shop-tokens-icon">💎</span><div class="shop-amount">3,600 T</div><div class="shop-bonus">+600 bonus</div><div class="shop-price">€24.99</div><button class="btn btn-pink" style="width:100%" onclick="buyTokens(3600)">Acheter</button></div>
+      <div class="shop-card"><span class="shop-tokens-icon">👑</span><div class="shop-amount">9,000 T</div><div class="shop-bonus">+1,500 bonus</div><div class="shop-price">€59.99</div><button class="btn btn-pink" style="width:100%" onclick="buyTokens(9000)">Acheter</button></div>
+    </div>
+    <div style="margin-top:48px">
+      <div style="background:linear-gradient(135deg,var(--c-surface),rgba(124,58,237,.1));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:32px;display:flex;align-items:center;gap:32px;flex-wrap:wrap">
+        <div style="font-size:4rem">⚔️</div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:var(--font-title);font-size:1.8rem;letter-spacing:2px;color:var(--c-neon4)">ELITE BATTLE PASS</div>
+          <p style="color:var(--c-muted);margin-top:8px;font-size:.9rem">Accès tournois premium, multiplicateur x1.5, +200 tokens offerts.</p>
         </div>
-        <div style="display:flex;gap:12px">
-          <button class="btn btn-ghost">📤 Retirer</button>
-          <button class="btn btn-primary">+ Acheter des tokens</button>
-        </div>
-      </div>
-
-      <div class="section-tag" style="margin-bottom:16px">Packs de tokens</div>
-      <div class="shop-grid">
-        <div class="shop-card">
-          <span class="shop-tokens-icon">🪙</span>
-          <div class="shop-amount">100 T</div>
-          <div class="shop-bonus">Starter Pack</div>
-          <div class="shop-price">€0.99</div>
-          <button class="btn btn-ghost" style="width:100%">Acheter</button>
-        </div>
-        <div class="shop-card">
-          <span class="shop-tokens-icon">🥈</span>
-          <div class="shop-amount">500 T</div>
-          <div class="shop-bonus">+50 bonus</div>
-          <div class="shop-price">€4.49</div>
-          <button class="btn btn-ghost" style="width:100%">Acheter</button>
-        </div>
-        <div class="shop-card featured">
-          <span class="shop-badge-featured">BEST VALUE</span>
-          <span class="shop-tokens-icon">🥇</span>
-          <div class="shop-amount">1,200 T</div>
-          <div class="shop-bonus">+200 bonus inclus</div>
-          <div class="shop-price">€9.99</div>
-          <button class="btn btn-primary" style="width:100%">Acheter</button>
-        </div>
-        <div class="shop-card">
-          <span class="shop-tokens-icon">💎</span>
-          <div class="shop-amount">3,000 T</div>
-          <div class="shop-bonus">+600 bonus</div>
-          <div class="shop-price">€24.99</div>
-          <button class="btn btn-pink" style="width:100%">Acheter</button>
-        </div>
-        <div class="shop-card">
-          <span class="shop-tokens-icon">👑</span>
-          <div class="shop-amount">7,500 T</div>
-          <div class="shop-bonus">+1,500 bonus</div>
-          <div class="shop-price">€59.99</div>
-          <button class="btn btn-pink" style="width:100%">Acheter</button>
-        </div>
-      </div>
-
-      <div style="margin-top:48px">
-        <div class="section-tag" style="margin-bottom:16px">Battle Pass</div>
-        <div style="background:linear-gradient(135deg,var(--c-surface),rgba(124,58,237,.1));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:32px;display:flex;align-items:center;gap:32px;flex-wrap:wrap">
-          <div style="font-size:4rem">⚔️</div>
-          <div style="flex:1;min-width:200px">
-            <div style="font-family:var(--font-title);font-size:1.8rem;letter-spacing:2px;color:var(--c-neon4)">ELITE BATTLE PASS</div>
-            <p style="color:var(--c-muted);margin-top:8px;font-size:.9rem">Accès à tous les tournois premium, multiplicateur de gains x1.5, skin exclusif, +200 tokens offerts dès l'achat.</p>
-          </div>
-          <div style="text-align:center">
-            <div style="font-family:var(--font-mono);font-size:1.6rem;color:var(--c-neon3);margin-bottom:8px">€9.99 / mois</div>
-            <button class="btn btn-primary" style="padding:12px 28px">S'abonner</button>
-          </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-mono);font-size:1.6rem;color:var(--c-neon3);margin-bottom:8px">€9.99 / mois</div>
+          <button class="btn btn-primary" style="padding:12px 28px">S'abonner</button>
         </div>
       </div>
     </div>
-  </section>
-</div><!-- /page-shop -->
-
+  </div></section>
+</div>
 </main>
 
-<!-- ══════════════════════════════════════════
-     FOOTER
-══════════════════════════════════════════ -->
-<footer>
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <span class="nav-logo">ELITE<span style="-webkit-text-fill-color:var(--c-neon3);color:var(--c-neon3)">ARENA</span></span>
-        <p>La plateforme compétitive qui récompense les meilleurs joueurs. Gratuit, légit, et en croissance constante.</p>
-        <div class="footer-social">
-          <a href="#" class="social-btn">𝕏</a>
-          <a href="#" class="social-btn">💬</a>
-          <a href="#" class="social-btn">📺</a>
-          <a href="#" class="social-btn">📸</a>
-        </div>
-      </div>
-      <div class="footer-col">
-        <h4>PLATEFORME</h4>
-        <a href="#" onclick="showPage('tournaments');setActive('tournaments')">Tournois</a>
-        <a href="#" onclick="showPage('matches');setActive('matches')">Live Matches</a>
-        <a href="#" onclick="showPage('leaderboard');setActive('leaderboard')">Leaderboard</a>
-        <a href="#" onclick="showPage('shop');setActive('shop')">Shop</a>
-      </div>
-      <div class="footer-col">
-        <h4>JEUX</h4>
-        <a href="#">Fortnite</a>
-        <a href="#">Warzone</a>
-        <a href="#">Valorant</a>
-        <a href="#">Rocket League</a>
-        <a href="#">Minecraft</a>
-      </div>
-      <div class="footer-col">
-        <h4>LÉGAL</h4>
-        <a href="#">Conditions d'utilisation</a>
-        <a href="#">Politique de confidentialité</a>
-        <a href="#">Politique des cookies</a>
-        <a href="#">Support</a>
-        <a href="#">Contact</a>
-      </div>
+<footer><div class="container">
+  <div class="footer-grid">
+    <div>
+      <div class="nav-logo" style="font-size:2rem;display:block;margin-bottom:12px" onclick="showPage('home');setActive('home')">ELITE<span>ARENA</span></div>
+      <p style="color:var(--c-muted);font-size:.9rem;max-width:280px;line-height:1.7">La plateforme compétitive qui récompense les meilleurs joueurs.</p>
+      <div class="footer-social"><div class="social-btn">𝕏</div><div class="social-btn">💬</div><div class="social-btn">📺</div></div>
     </div>
-    <div class="footer-bottom">
-      <span>© 2025 EliteArena. Tous droits réservés. Conçu avec <span>❤️</span> pour les gamers.</span>
-      <span style="font-family:var(--font-mono);font-size:.75rem">v2.0.0</span>
+    <div class="footer-col"><h4>PLATEFORME</h4>
+      <a onclick="showPage('tournaments');setActive('tournaments')">Tournois</a>
+      <a onclick="showPage('matches');setActive('matches')">Live Matches</a>
+      <a onclick="showPage('leaderboard');setActive('leaderboard')">Leaderboard</a>
+      <a onclick="showPage('shop');setActive('shop')">Shop</a>
     </div>
+    <div class="footer-col"><h4>JEUX</h4><a>Fortnite</a><a>Warzone</a><a>Valorant</a><a>Rocket League</a></div>
+    <div class="footer-col"><h4>LÉGAL</h4><a>Conditions</a><a>Confidentialité</a><a>Support</a></div>
   </div>
-</footer>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding-top:24px;border-top:1px solid var(--c-border);font-size:.8rem;color:var(--c-muted)">
+    <span>© 2025 EliteArena. Tous droits réservés.</span>
+    <span style="font-family:var(--font-mono);font-size:.75rem">v2.1.0 — Supabase</span>
+  </div>
+</div></footer>
 
 <script>
-// ── PAGE NAVIGATION ──
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function setActive(id) {
-  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const el = document.getElementById('nav-' + id);
-  if(el) el.classList.add('active');
-}
+const SUPABASE_URL = 'https://zeccxtgnthzoamwjvqkn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplY2N4dGdudGh6b2Ftd2p2cWtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0ODI5MDIsImV4cCI6MjA4OTA1ODkwMn0.GnH1GbV6r1PcJf-4dk0JM89m01IuC_LsVzjGqT1GvqQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── FILTER BUTTONS ──
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    this.closest('.filters').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-  });
+let currentUser = null, currentProfile = null, allTournaments = [];
+const GAME_ICONS  = {fortnite:'⚡',warzone:'💀',valorant:'🎯',rocket_league:'🚗'};
+const GAME_LABELS = {fortnite:'Fortnite',warzone:'Warzone',valorant:'Valorant',rocket_league:'Rocket League'};
+
+db.auth.onAuthStateChange(async (_e, session) => {
+  currentUser = session?.user ?? null;
+  if (currentUser) { await loadProfile(); renderNavUser(); } else { currentProfile = null; renderNavGuest(); }
+  updateTokenDisplay();
 });
 
-// ── TABS ──
-document.querySelectorAll('.tabs').forEach(tabGroup => {
-  tabGroup.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-      tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      this.classList.add('active');
-    });
-  });
-});
+async function loadProfile() {
+  const { data } = await db.from('users').select('*').eq('id', currentUser.id).single();
+  currentProfile = data;
+}
 
-// ── ANIMATED COUNTER ──
-function animateCount(el, end, duration) {
-  let start = 0, startTime = null;
-  const step = (timestamp) => {
-    if (!startTime) startTime = timestamp;
-    const progress = Math.min((timestamp - startTime) / duration, 1);
-    el.textContent = Math.floor(progress * end).toLocaleString('fr-FR');
-    if (progress < 1) requestAnimationFrame(step);
-  };
+function renderNavUser() {
+  const name = currentProfile?.username ?? currentUser.email.split('@')[0];
+  const tokens = currentProfile?.tokens ?? 0;
+  document.getElementById('navActions').innerHTML = `
+    <div class="nav-user"><span>👤 ${name}</span><span class="nav-tokens">💰 ${tokens} T</span></div>
+    <button class="btn btn-danger" onclick="handleLogout()">Quitter</button>`;
+}
+function renderNavGuest() {
+  document.getElementById('navActions').innerHTML = `
+    <button class="btn btn-ghost" onclick="openModal('login')">Log In</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Sign Up Free</button>`;
+}
+
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  const err   = document.getElementById('loginError');
+  err.classList.remove('show');
+  if (!email||!pass){err.textContent='Remplis tous les champs.';err.classList.add('show');return;}
+  const { error } = await db.auth.signInWithPassword({email,password:pass});
+  if (error){err.textContent='Email ou mot de passe incorrect.';err.classList.add('show');return;}
+  closeModal(); showToast('✅ Connexion réussie !','success');
+}
+
+async function handleRegister() {
+  const username = document.getElementById('regUsername').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const pass     = document.getElementById('regPassword').value;
+  const game     = document.getElementById('regGame').value;
+  const err      = document.getElementById('regError');
+  err.classList.remove('show');
+  if (!username||!email||!pass){err.textContent='Remplis tous les champs.';err.classList.add('show');return;}
+  if (pass.length<6){err.textContent='Mot de passe trop court.';err.classList.add('show');return;}
+  const {data,error} = await db.auth.signUp({email,password:pass});
+  if (error){err.textContent=error.message;err.classList.add('show');return;}
+  await db.from('users').insert({id:data.user.id,username,game,tokens:0,wins:0,kd:0.0});
+  closeModal(); showToast('🎉 Compte créé ! Bienvenue !','success');
+}
+
+async function handleLogout() { await db.auth.signOut(); showToast('👋 À bientôt !','success'); }
+
+async function loadTournaments() {
+  const {data,error} = await db.from('tournaments').select('*').order('created_at',{ascending:false});
+  if (error||!data) { emptyGrid('homeTournaments'); emptyGrid('allTournaments'); return; }
+  allTournaments = data;
+  renderTournamentGrid(data.slice(0,3),'homeTournaments');
+  renderTournamentGrid(data,'allTournaments');
+}
+
+function renderTournamentGrid(list, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!list.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">🏆</div><p>Aucun tournoi pour le moment.<br>Revenez bientôt !</p></div>`; return; }
+  el.innerHTML = list.map(t => {
+    const pct  = Math.round((t.filled_slots/t.max_slots)*100);
+    const icon = GAME_ICONS[t.game]??'🏆';
+    const badge = t.status==='live'
+      ? `<div class="t-card-live-badge"><span class="pulse-dot"></span> LIVE</div>`
+      : `<div class="t-card-soon">SOON</div>`;
+    return `<div class="t-card" onclick="joinTournament('${t.id}')">
+      <div class="t-card-banner ${t.game??'default'}"><span class="t-card-banner-icon">${icon}</span>${badge}</div>
+      <div class="t-card-body">
+        <div class="t-card-game">${(GAME_LABELS[t.game]??t.game).toUpperCase()}</div>
+        <div class="t-card-name">${t.name}</div>
+        <div class="t-card-meta">
+          <div class="meta-chip">👤 ${t.format??'Solo'}</div>
+          <div class="meta-chip">🌍 ${t.region??'EU'}</div>
+          <div class="meta-chip">🆓 Free</div>
+        </div>
+        <div class="t-card-footer">
+          <div class="prize-pool"><span class="prize-label">Prize Pool</span><span class="prize-amount">${t.prize_pool} T</span></div>
+          <div class="slots-info">${t.filled_slots}/${t.max_slots}<div class="slots-bar"><div class="slots-fill" style="width:${pct}%"></div></div></div>
+        </div>
+      </div>
+      <div class="t-card-progress"><div class="progress-label"><span>Inscriptions</span><span>${pct}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
+    </div>`;
+  }).join('');
+}
+
+function emptyGrid(id) { const el=document.getElementById(id); if(el) el.innerHTML=`<div class="empty-state"><div class="empty-icon">🏆</div><p>Aucun tournoi trouvé.</p></div>`; }
+
+function filterTournaments(game, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTournamentGrid(game==='all'?allTournaments:allTournaments.filter(t=>t.game===game),'allTournaments');
+}
+
+async function joinTournament(id) {
+  if (!currentUser) { openModal('login'); showToast('⚠️ Connecte-toi pour rejoindre un tournoi','error'); return; }
+  const t = allTournaments.find(t=>t.id===id);
+  if (!t) return;
+  if (t.filled_slots>=t.max_slots) { showToast('❌ Ce tournoi est complet !','error'); return; }
+  await db.from('tournaments').update({filled_slots:t.filled_slots+1}).eq('id',id);
+  showToast(`✅ Inscrit à "${t.name}" !`,'success');
+  loadTournaments();
+}
+
+async function loadMatches() {
+  const {data,error} = await db.from('matches').select('*').eq('status','live').order('started_at',{ascending:false});
+  const el = document.getElementById('liveMatches');
+  if (error||!data||!data.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">⚡</div><p>Aucun match en direct actuellement.<br>Les matchs apparaissent ici en temps réel.</p></div>`; return; }
+  el.innerHTML = data.map(m=>`
+    <div class="match-card">
+      <div class="match-live-dot"></div>
+      <div class="match-teams">
+        <div class="team"><div class="team-icon">🦅</div><div class="team-name">${m.team_a_name??'Team A'}</div></div>
+        <div class="vs-badge">VS</div>
+        <div class="team"><div class="team-icon">🐉</div><div class="team-name">${m.team_b_name??'Team B'}</div></div>
+      </div>
+      <div class="match-score"><span class="score-a">${m.score_a}</span><span class="score-sep">—</span><span class="score-b">${m.score_b}</span></div>
+      <div class="match-meta"><span class="match-game-tag">LIVE</span><span style="font-family:var(--font-mono);color:var(--c-neon2)">EN COURS</span></div>
+    </div>`).join('');
+}
+
+async function loadLeaderboard() {
+  const {data,error} = await db.from('users').select('*').order('tokens',{ascending:false}).limit(10);
+  const el = document.getElementById('leaderboardRows');
+  if (error||!data||!data.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><p>Sois le premier inscrit ! 🏆</p></div>`; return; }
+  const medals=['🥇','🥈','🥉'], rc=['rank-gold','rank-silver','rank-bronze'], rowCl=['top-1','top-2','top-3'];
+  el.innerHTML = data.map((u,i)=>`
+    <div class="lb-row ${i<3?rowCl[i]:''}">
+      <div class="lb-rank ${i<3?rc[i]:'rank-std'}">${i<3?medals[i]:i+1}</div>
+      <div class="lb-player"><div class="lb-avatar">👤</div><div><div class="lb-name">${u.username}</div><div class="lb-tag">${u.game??'fortnite'}</div></div></div>
+      <div class="lb-val lb-wins">${u.wins}</div>
+      <div class="lb-val lb-kd">${(u.kd??0).toFixed(1)}</div>
+      <div class="lb-val lb-earnings">${u.tokens} T</div>
+    </div>`).join('');
+}
+
+function updateTokenDisplay() {
+  const t = currentProfile?.tokens??0;
+  const el = document.getElementById('userTokensDisplay');
+  if (el) el.textContent = t.toLocaleString('fr-FR');
+}
+
+async function buyTokens(amount) {
+  if (!currentUser) { openModal('login'); showToast('⚠️ Connecte-toi pour acheter des tokens','error'); return; }
+  const newTokens = (currentProfile?.tokens??0)+amount;
+  await db.from('users').update({tokens:newTokens}).eq('id',currentUser.id);
+  await db.from('transactions').insert({user_id:currentUser.id,type:'purchase',amount});
+  currentProfile = {...currentProfile,tokens:newTokens};
+  updateTokenDisplay(); renderNavUser();
+  showToast(`✅ +${amount} tokens ajoutés !`,'success');
+}
+
+async function loadStats() {
+  const {count:uc} = await db.from('users').select('*',{count:'exact',head:true});
+  const {data:tx}  = await db.from('transactions').select('amount');
+  const total = tx?.reduce((s,t)=>s+t.amount,0)??0;
+  animateCount(document.getElementById('cnt-players'), uc??0, 1500);
+  animateCount(document.getElementById('cnt-tokens'),  total, 1500, 'K');
+}
+
+function animateCount(el,end,dur,suf='') {
+  if (!el) return;
+  let t0=null;
+  const fmt = suf==='K' ? v=>(v/1000).toFixed(1)+'K' : v=>v.toLocaleString('fr-FR');
+  const step = ts => { if(!t0)t0=ts; const p=Math.min((ts-t0)/dur,1); el.textContent=fmt(Math.floor(p*end)); if(p<1)requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
-const cntEl = document.getElementById('cnt-players');
-if (cntEl) setTimeout(() => animateCount(cntEl, 81247, 2000), 500);
 
-// ── LIVE SCORE SIMULATION ──
-function randomizeScores() {
-  document.querySelectorAll('.score-a,.score-b').forEach(s => {
-    const current = parseInt(s.textContent);
-    if (Math.random() < 0.2) {
-      s.textContent = Math.min(current + 1, 30);
-      s.style.animation = 'none';
-      s.offsetHeight;
-      s.style.animation = 'scoreFlash .3s ease';
-    }
-  });
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='tournaments') loadTournaments();
+  if(id==='matches')     loadMatches();
+  if(id==='leaderboard') loadLeaderboard();
 }
-const style = document.createElement('style');
-style.textContent = '@keyframes scoreFlash{0%{transform:scale(1.4);color:#fff}100%{transform:scale(1)}}';
-document.head.appendChild(style);
-setInterval(randomizeScores, 3500);
+function setActive(id) {
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  const el=document.getElementById('nav-'+id); if(el) el.classList.add('active');
+}
+function openModal(tab) { document.getElementById('authModal').classList.add('open'); switchModalTab(tab); }
+function closeModal()    { document.getElementById('authModal').classList.remove('open'); }
+function switchModalTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',(i===0)===(tab==='login')));
+  document.getElementById('formLogin').style.display    = tab==='login'    ?'block':'none';
+  document.getElementById('formRegister').style.display = tab==='register' ?'block':'none';
+}
+document.getElementById('authModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+let toastTm;
+function showToast(msg,type='success') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className=`toast ${type} show`;
+  clearTimeout(toastTm); toastTm=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+(async()=>{ await loadTournaments(); await loadStats(); })();
 </script>
 </body>
 </html>
