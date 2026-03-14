@@ -190,7 +190,18 @@ footer{background:var(--c-bg2);border-top:1px solid var(--c-border);padding:60px
       <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="ton@email.com"></div>
       <div class="form-group"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
       <div class="form-error" id="loginError"></div>
-      <button class="btn btn-primary" style="width:100%;margin-top:8px;justify-content:center" onclick="handleLogin()">Se connecter</button>
+      <div style="text-align:right;margin-top:8px;margin-bottom:4px">
+        <span onclick="switchModalTab('forgot')" style="font-size:.8rem;color:var(--c-muted);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--c-neon1)'" onmouseout="this.style.color='var(--c-muted)'">Mot de passe oublié ?</span>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:4px;justify-content:center" onclick="handleLogin()">Se connecter</button>
+    </div>
+    <div id="formForgot" style="display:none">
+      <p style="color:var(--c-muted);font-size:.9rem;margin-bottom:20px">Entre ton email et on t'envoie un lien pour réinitialiser ton mot de passe.</p>
+      <div class="form-group"><label>Email</label><input type="email" id="forgotEmail" placeholder="ton@email.com"></div>
+      <div class="form-error" id="forgotError"></div>
+      <div style="color:var(--c-neon1);font-size:.85rem;margin-top:8px;display:none" id="forgotSuccess">✅ Email envoyé ! Vérifie ta boîte mail.</div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px;justify-content:center" onclick="handleForgot()">Envoyer le lien</button>
+      <div style="text-align:center;margin-top:16px"><span onclick="switchModalTab('login')" style="font-size:.8rem;color:var(--c-muted);cursor:pointer" onmouseover="this.style.color='var(--c-neon1)'" onmouseout="this.style.color='var(--c-muted)'">← Retour à la connexion</span></div>
     </div>
     <div id="formRegister" style="display:none">
       <div class="form-group"><label>Pseudo</label><input type="text" id="regUsername" placeholder="TonPseudo_FN"></div>
@@ -583,9 +594,25 @@ function setActive(id) {
 function openModal(tab) { document.getElementById('authModal').classList.add('open'); switchModalTab(tab); }
 function closeModal()    { document.getElementById('authModal').classList.remove('open'); }
 function switchModalTab(tab) {
-  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',(i===0)===(tab==='login')));
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>{
+    t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register'));
+  });
   document.getElementById('formLogin').style.display    = tab==='login'    ?'block':'none';
   document.getElementById('formRegister').style.display = tab==='register' ?'block':'none';
+  document.getElementById('formForgot').style.display   = tab==='forgot'   ?'block':'none';
+}
+
+async function handleForgot() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const err   = document.getElementById('forgotError');
+  const ok    = document.getElementById('forgotSuccess');
+  err.classList.remove('show'); ok.style.display='none';
+  if (!email) { err.textContent='Entre ton email.'; err.classList.add('show'); return; }
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  if (error) { err.textContent='Email introuvable.'; err.classList.add('show'); return; }
+  ok.style.display = 'block';
 }
 document.getElementById('authModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
